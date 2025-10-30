@@ -65,7 +65,11 @@ DATABASES = {
         "ENGINE": "djongo",
         "NAME": "silpo_monitor",
         "ENFORCE_SCHEMA": False,
-        "CLIENT": {"host": "mongodb://localhost:27017"},
+        "CLIENT": {
+            "host": "127.0.0.1",
+            "port": 27017,
+            "tz_aware": False,
+        },
     }
 }
 
@@ -92,9 +96,6 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 
-# Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
