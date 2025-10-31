@@ -1,130 +1,64 @@
-from __future__ import annotations
-
 import os
-import sys
-from decimal import Decimal
-from pathlib import Path
-
 import django
-from django.conf import settings
-from django.core.exceptions import ValidationError
-from bson.decimal128 import Decimal128
+from decimal import Decimal
+from django.db import connection
 
-BASE_DIR = Path(__file__).resolve().parent
-if str(BASE_DIR) not in sys.path:
-    sys.path.insert(0, str(BASE_DIR))
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "silpo_monitor.settings")
+django.setup()
 
-
-def bootstrap_django() -> None:
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "silpo_monitor.settings")
-    if not settings.configured:
-        module = os.environ["DJANGO_SETTINGS_MODULE"]
-        if not module:
-            raise RuntimeError(
-                "DJANGO_SETTINGS_MODULE is not configured. "
-                "Set it before running this script."
-            )
-    django.setup()
+from monitoring.repositories import repository_registry as repo
+from monitoring.models import Product, Store, ProductType
 
 
-def _get_by_name(repo, name: str):
-    for entity in repo.get_all():
-        if getattr(entity, "name", None) == name:
-            return repo.get_by_id(entity.id)
-    return None
+def main():
+    repo.stores.delete_all()
+    repo.product_types.delete_all()
+    repo.products.delete_all()
+    with connection.cursor() as cursor:
+        cursor.execute("ALTER TABLE monitoring_product AUTO_INCREMENT = 1")
+        cursor.execute("ALTER TABLE monitoring_store AUTO_INCREMENT = 1")
+        cursor.execute("ALTER TABLE monitoring_producttype AUTO_INCREMENT = 1")
+    print("Database cleared\n")
+
+    beer = repo.product_types.add(name="Beer", slug="beer", description="Пиво")
+    wine = repo.product_types.add(name="Wine", slug="wine", description="Вино")
+    silpo_kyiv = repo.stores.add(name="Silpo Київ", city="Київ", address="Хрещатик 1", description="Центр")
+    atb = repo.stores.add(name="АТБ Харків", city="Харків", address="Сумська 25", description="Дискаунтер")
+    print("Product types and stores added")
+
+    repo.products.add(name="Lvivske 1715", sku="BEER-001", description="Лагер 4.7%",
+                      product_type=beer, store=silpo_kyiv, regular_price=Decimal("32.50"), 
+                      promo_price=Decimal("27.90"), promo_ends_at=None)
+    
+    repo.products.add(name="Оболонь Преміум", sku="BEER-002", description="Світле 4.5%",
+                      product_type=beer, store=atb, regular_price=Decimal("35.00"), 
+                      promo_price=None, promo_ends_at=None)
+    
+    repo.products.add(name="Inkerman", sku="WINE-001", description="Червоне 13%",
+                      product_type=wine, store=silpo_kyiv, regular_price=Decimal("125.00"), 
+                      promo_price=Decimal("99.00"), promo_ends_at=None)
+    print("Products added\n")
 
 
-def ensure_product_type(registry):
-    repo = registry.product_types
-    existing = _get_by_name(repo, "Beer")
-    if existing:
-        return existing
-    return repo.add(
-        name="Beer",
-        slug="beer",
-        description="Alcohol beverages monitored for promotions.",
-    )
+def demo_queries():
+    repo.products.delete(2)
+    print("\nAll products:")
+    for p in repo.products.get_all():
+        print(f"{p.name} - {p.regular_price} грн")
 
+    print("\nProducts with discount:")
+    for p in repo.products.get_all():
+        if p.promo_price:
+            discount = round((1 - p.promo_price/p.regular_price) * 100, 1)
+            print(f"{p.name}: {p.regular_price} -> {p.promo_price} грн (-{discount}%)")
 
-def ensure_store(registry):
-    repo = registry.stores
-    existing = _get_by_name(repo, "Silpo Kyiv Center")
-    if existing:
-        return existing
-    return repo.add(
-        name="Silpo Kyiv Center",
-        description="Flagship store for promo scraping.",
-        address="Khreshchatyk St. 1",
-        city="Kyiv",
-    )
-
-
-def ensure_product(registry, store, product_type):
-    repo = registry.products
-    for entity in repo.get_all():
-        if getattr(entity, "sku", None) == "BEER-0001":
-            return repo.get_by_id(entity.id)
-    return repo.add(
-        name="Lvivske 1715",
-        description="Filtered lager 4.7%",
-        sku="BEER-0001",
-        product_type=product_type,
-        store=store,
-        regular_price=Decimal("32.50"),
-        promo_price=Decimal("27.90"),
-        promo_ends_at=None,
-    )
-
-
-def get_repository_registry():
-    from monitoring.repositories import repository_registry
-
-    return repository_registry
-
-
-def demo() -> None:
-    registry = get_repository_registry()
-    product_type = ensure_product_type(registry)
-    store = ensure_store(registry)
-    product = ensure_product(registry, store, product_type)
-
-    product_type_by_id = registry.product_types.get_by_id(product_type.id)
-    store_by_id = registry.stores.get_by_id(store.id)
-    product_by_id = registry.products.get_by_id(product.id)
-
-    all_types = list(registry.product_types.get_all())
-    all_stores = list(registry.stores.get_all())
-    all_products = list(registry.products.get_all())
-
-    print("Product type:", product_type_by_id)
-    print("Store:", store_by_id)
-    discount = 0
-    if product_by_id and product_by_id.regular_price and product_by_id.promo_price:
-        regular_price = (
-            product_by_id.regular_price.to_decimal()
-            if isinstance(product_by_id.regular_price, Decimal128)
-            else product_by_id.regular_price
-        )
-        promo_price = (
-            product_by_id.promo_price.to_decimal()
-            if isinstance(product_by_id.promo_price, Decimal128)
-            else product_by_id.promo_price
-        )
-        discount = round((1 - (promo_price / regular_price)) * 100, 2)
-
-    print("Product:", product_by_id, "discount =", discount, "%")
-    print("All product types:", [obj.name for obj in all_types])
-    print("All stores:", [obj.name for obj in all_stores])
-    print("All products:", [obj.name for obj in all_products])
+    products = list(repo.products.get_all())
+    avg_price = sum(p.regular_price for p in products) / len(products)
+    print(f"\nStats:")
+    print(f"All products: {len(products)}")
+    print(f"All stores: {len(list(repo.stores.get_all()))}")
 
 
 if __name__ == "__main__":
-    try:
-        bootstrap_django()
-        demo()
-    except ValidationError as exc:
-        print("Validation error:", exc, file=sys.stderr)
-        sys.exit(1)
-    except Exception as exc:
-        print("Error:", exc, file=sys.stderr)
-        sys.exit(1)
+    main()
+    demo_queries()

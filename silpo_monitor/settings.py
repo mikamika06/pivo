@@ -52,7 +52,7 @@ TEMPLATES = [
 WSGI_APPLICATION = "silpo_monitor.wsgi.application"
 ASGI_APPLICATION = "silpo_monitor.asgi.application"
 
-# Database
+
 # DATABASES = {
 #     "default": {
 #         "ENGINE": "django.db.backends.sqlite3",
@@ -60,15 +60,30 @@ ASGI_APPLICATION = "silpo_monitor.asgi.application"
 #     }
 # }
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "djongo",
+#         "NAME": "silpo_monitor",
+#         "ENFORCE_SCHEMA": False,
+#         "CLIENT": {
+#             "host": "127.0.0.1",
+#             "port": 27017,
+#             "tz_aware": False,
+#         },
+#     }
+# }
+
 DATABASES = {
     "default": {
-        "ENGINE": "djongo",
+        "ENGINE": "django.db.backends.mysql",
         "NAME": "silpo_monitor",
-        "ENFORCE_SCHEMA": False,
-        "CLIENT": {
-            "host": "127.0.0.1",
-            "port": 27017,
-            "tz_aware": False,
+        "USER": "root",
+        "PASSWORD": "",
+        "HOST": "127.0.0.1",
+        "PORT": "3306",
+        "OPTIONS": {
+            "charset": "utf8mb4",
+            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
         },
     }
 }
