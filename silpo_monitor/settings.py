@@ -61,13 +61,26 @@ ASGI_APPLICATION = "silpo_monitor.asgi.application"
 # }
 
 DATABASES = {
-    "default": {
-        "ENGINE": "djongo",
-        "NAME": "silpo_monitor",
-        "ENFORCE_SCHEMA": False,
-        "CLIENT": {"host": "mongodb://localhost:27017"},
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'pivo_db',                  
+        'USER': 'root',                        
+        'PASSWORD': '1234', 
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+        },
     }
 }
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "djongo",
+#         "NAME": "silpo_monitor",
+#         "ENFORCE_SCHEMA": False,
+#         "CLIENT": {"host": "mongodb://localhost:27017"},
+#     }
+# }
 
 
 # Password validation
