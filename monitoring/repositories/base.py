@@ -28,5 +28,12 @@ class BaseRepository(Generic[ModelType]):
         instance.save()
         return instance
     
-    def delete_all(self) -> int:
+    def delete_all(self):
         return self.model.objects.all().delete()   
+
+    def delete(self, object_id: Any) -> bool:
+        instance = self.get_by_id(object_id)  
+        if instance:                        
+            instance.delete()               
+            return True                   
+        return False      
