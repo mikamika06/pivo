@@ -8,6 +8,7 @@ from pathlib import Path
 import django
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from bson.decimal128 import Decimal128
 
 BASE_DIR = Path(__file__).resolve().parent
 if str(BASE_DIR) not in sys.path:
@@ -99,9 +100,17 @@ def demo() -> None:
     print("Store:", store_by_id)
     discount = 0
     if product_by_id and product_by_id.regular_price and product_by_id.promo_price:
-        discount = round(
-            (1 - (product_by_id.promo_price / product_by_id.regular_price)) * 100, 2
+        regular_price = (
+            product_by_id.regular_price.to_decimal()
+            if isinstance(product_by_id.regular_price, Decimal128)
+            else product_by_id.regular_price
         )
+        promo_price = (
+            product_by_id.promo_price.to_decimal()
+            if isinstance(product_by_id.promo_price, Decimal128)
+            else product_by_id.promo_price
+        )
+        discount = round((1 - (promo_price / regular_price)) * 100, 2)
 
     print("Product:", product_by_id, "discount =", discount, "%")
     print("All product types:", [obj.name for obj in all_types])

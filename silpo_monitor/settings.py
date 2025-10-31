@@ -61,6 +61,7 @@ ASGI_APPLICATION = "silpo_monitor.asgi.application"
 # }
 
 DATABASES = {
+<<<<<<< HEAD
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'pivo_db',                  
@@ -70,6 +71,16 @@ DATABASES = {
         'PORT': '3306',
         'OPTIONS': {
             'charset': 'utf8mb4',
+=======
+    "default": {
+        "ENGINE": "djongo",
+        "NAME": "silpo_monitor",
+        "ENFORCE_SCHEMA": False,
+        "CLIENT": {
+            "host": "127.0.0.1",
+            "port": 27017,
+            "tz_aware": False,
+>>>>>>> 7ad6f014b73dec8fe3ebb09cf4ef82111aa64c5a
         },
     }
 }
@@ -105,9 +116,6 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 
-# Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
