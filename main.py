@@ -1,7 +1,6 @@
 import os
 import django
 from decimal import Decimal
-from django.db import connection
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "silpo_monitor.settings")
 django.setup()
@@ -14,10 +13,6 @@ def main():
     repo.stores.delete_all()
     repo.product_types.delete_all()
     repo.products.delete_all()
-    with connection.cursor() as cursor:
-        cursor.execute("ALTER TABLE monitoring_product AUTO_INCREMENT = 1")
-        cursor.execute("ALTER TABLE monitoring_store AUTO_INCREMENT = 1")
-        cursor.execute("ALTER TABLE monitoring_producttype AUTO_INCREMENT = 1")
     print("Database cleared\n")
 
     beer = repo.product_types.add(name="Beer", slug="beer", description="Пиво")
@@ -41,7 +36,7 @@ def main():
 
 
 def demo_queries():
-    repo.products.delete(2)
+    repo.products.delete(5)
     print("\nAll products:")
     for p in repo.products.get_all():
         print(f"{p.name} - {p.regular_price} грн")
