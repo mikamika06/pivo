@@ -27,3 +27,6 @@ class BaseRepository(Generic[ModelType]):
         instance.full_clean()
         instance.save()
         return instance
+    
+    def delete_all(self) -> int:
+        return self.model.objects.all().delete()   

@@ -10,9 +10,9 @@ from monitoring.models import Product, Store, ProductType
 
 
 def main():
-    Product.objects.all().delete()
-    Store.objects.all().delete()
-    ProductType.objects.all().delete()
+    repo.stores.delete_all()
+    repo.product_types.delete_all()
+    repo.products.delete_all()
     print("Database cleared\n")
 
     beer = repo.product_types.add(name="Beer", slug="beer", description="Пиво")
@@ -29,7 +29,7 @@ def main():
                       product_type=beer, store=atb, regular_price=Decimal("35.00"), 
                       promo_price=None, promo_ends_at=None)
     
-    repo.products.add(name="Inkerman Каберне", sku="WINE-001", description="Червоне 13%",
+    repo.products.add(name="Inkerman", sku="WINE-001", description="Червоне 13%",
                       product_type=wine, store=silpo_kyiv, regular_price=Decimal("125.00"), 
                       promo_price=Decimal("99.00"), promo_ends_at=None)
     print("Products added\n")
@@ -39,13 +39,13 @@ def demo_queries():
 
     print("\nAll products:")
     for p in repo.products.get_all():
-        print(f"   • {p.name} - {p.regular_price} грн")
+        print(f"{p.name} - {p.regular_price} грн")
 
     print("\nProducts with discount:")
     for p in repo.products.get_all():
         if p.promo_price:
             discount = round((1 - p.promo_price/p.regular_price) * 100, 1)
-            print(f"   • {p.name}: {p.regular_price} → {p.promo_price} грн (-{discount}%)")
+            print(f"{p.name}: {p.regular_price} -> {p.promo_price} грн (-{discount}%)")
 
     products = list(repo.products.get_all())
     avg_price = sum(p.regular_price for p in products) / len(products)
