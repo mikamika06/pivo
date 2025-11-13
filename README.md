@@ -59,7 +59,7 @@ curl -u admin:password http://localhost:8000/api/products/
 **Приклад POST:**
 ```json
 {
-  "name": "Силпо Київ",
+  "name": "Сільпо Київ",
   "address": "вул. Хрещатик, 1",
   "city": "Київ",
   "description": "Центральний магазин"
@@ -68,7 +68,7 @@ curl -u admin:password http://localhost:8000/api/products/
 
 ---
 
-### Product (Розробник 3)
+### Product 
 
 | Метод | Endpoint | Опис |
 |-------|----------|------|
@@ -115,7 +115,7 @@ curl -u admin:password http://localhost:8000/api/products/
 
 ---
 
-## ProductSerializer (Розробник 3)
+## ProductSerializer 
 
 ```python
 class ProductSerializer(serializers.ModelSerializer):
@@ -134,7 +134,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
 ---
 
-## ProductViewSet (Розробник 3)
+## ProductViewSet 
 
 ```python
 class ProductViewSet(viewsets.ViewSet):
@@ -149,7 +149,7 @@ class ProductViewSet(viewsets.ViewSet):
 
 ---
 
-## ProductRepository (Розробник 3)
+## ProductRepository 
 
 ```python
 class ProductRepository(BaseRepository[Product]):
