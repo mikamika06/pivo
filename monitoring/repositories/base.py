@@ -27,6 +27,18 @@ class BaseRepository(Generic[ModelType]):
         instance.full_clean()
         instance.save()
         return instance
+
+    def update(self, object_id: Any, **payload: Any) -> Optional[ModelType]:
+        instance = self.get_by_id(object_id)
+        if not instance:
+            return None
+
+        for field, value in payload.items():
+            setattr(instance, field, value)
+
+        instance.full_clean()
+        instance.save()
+        return instance
     
     def delete_all(self):
         return self.model.objects.all().delete()   

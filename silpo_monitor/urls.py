@@ -1,7 +1,14 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
+
+from monitoring.api.views import ProductTypeViewSet
+
+router = DefaultRouter()
+router.register("product-types", ProductTypeViewSet, basename="product-type")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("api/", include(router.urls)),
+    path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
 ]
-

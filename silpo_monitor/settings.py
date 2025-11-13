@@ -1,6 +1,7 @@
 """
 Django settings for silpo_monitor project.
 """
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / "subdir".
@@ -19,6 +20,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework",
     "monitoring.apps.MonitoringConfig",
 ]
 
@@ -53,40 +55,43 @@ WSGI_APPLICATION = "silpo_monitor.wsgi.application"
 ASGI_APPLICATION = "silpo_monitor.asgi.application"
 
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.sqlite3",
-#         "NAME": BASE_DIR / "db.sqlite3",
-#     }
-# }
+DB_BACKEND = os.getenv("DJANGO_DB_BACKEND", "sqlite").lower()
 
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "djongo",
-#         "NAME": "silpo_monitor",
-#         "ENFORCE_SCHEMA": False,
-#         "CLIENT": {
-#             "host": "127.0.0.1",
-#             "port": 27017,
-#             "tz_aware": False,
-#         },
-#     }
-# }
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "silpo_monitor",
-        "USER": "root",
-        "PASSWORD": "",
-        "HOST": "127.0.0.1",
-        "PORT": "3306",
-        "OPTIONS": {
-            "charset": "utf8mb4",
-            "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+if DB_BACKEND == "mysql":
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": os.getenv("MYSQL_DATABASE", "silpo_monitor"),
+            "USER": os.getenv("MYSQL_USER", "root"),
+            "PASSWORD": os.getenv("MYSQL_PASSWORD", ""),
+            "HOST": os.getenv("MYSQL_HOST", "127.0.0.1"),
+            "PORT": os.getenv("MYSQL_PORT", "3306"),
+            "OPTIONS": {
+                "charset": "utf8mb4",
+                "init_command": "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
+        }
     }
-}
+elif DB_BACKEND == "djongo":
+    DATABASES = {
+        "default": {
+            "ENGINE": "djongo",
+            "NAME": os.getenv("DJONGO_DATABASE", "silpo_monitor"),
+            "ENFORCE_SCHEMA": False,
+            "CLIENT": {
+                "host": os.getenv("DJONGO_HOST", "127.0.0.1"),
+                "port": int(os.getenv("DJONGO_PORT", "27017")),
+                "tz_aware": False,
+            },
+        }
+    }
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / os.getenv("SQLITE_DB_NAME", "db.sqlite3"),
+        }
+    }
 
 
 # Password validation
@@ -114,3 +119,13 @@ USE_TZ = True
 STATIC_URL = "/static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.BasicAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+}
