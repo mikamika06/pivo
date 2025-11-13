@@ -2,10 +2,11 @@ from django.contrib import admin
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from monitoring.api.views import ProductTypeViewSet
+from monitoring.api.views import ProductTypeViewSet, StoreViewSet
 
 router = DefaultRouter()
 router.register("product-types", ProductTypeViewSet, basename="product-type")
+router.register("stores", StoreViewSet, basename="store")
 
 urlpatterns = [
     path("admin/", admin.site.urls),
