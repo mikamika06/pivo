@@ -1,0 +1,188 @@
+{% extends "web_interface/base.html" %}
+
+{% block title %}{{ product.name }} - Деталі продукту{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'product_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Назад до списку
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">
+                    <i class="bi bi-box-seam"></i> {{ product.name }}
+                </h2>
+            </div>
+            <div class="card-body">
+                {% if product.description %}
+                    <div class="mb-4">
+                        <h5 class="text-muted">Опис</h5>
+                        <p class="lead">{{ product.description }}</p>
+                    </div>
+                {% endif %}
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5 class="text-muted">Базова інформація</h5>
+                        <table class="table table-sm">
+                            <tr>
+                                <th width="40%">ID:</th>
+                                <td><code>{{ product.id }}</code></td>
+                            </tr>
+                            <tr>
+                                <th>SKU:</th>
+                                <td><code>{{ product.sku }}</code></td>
+                            </tr>
+                            <tr>
+                                <th>Тип продукту:</th>
+                                <td>
+                                    <span class="badge bg-info text-dark">
+                                        {{ product.product_type.name }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Статус:</th>
+                                <td>
+                                    {% if product.is_active %}
+                                        <span class="badge bg-success">Активний</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Неактивний</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="text-muted">Ціни</h5>
+                        <table class="table table-sm">
+                            <tr>
+                                <th width="40%">Звичайна ціна:</th>
+                                <td>
+                                    <strong class="fs-5">{{ product.regular_price }} грн</strong>
+                                </td>
+                            </tr>
+                            {% if product.promo_price %}
+                            <tr>
+                                <th>Акційна ціна:</th>
+                                <td>
+                                    <strong class="fs-5 text-danger">
+                                        {{ product.promo_price }} грн
+                                    </strong>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Економія:</th>
+                                <td>
+                                    <span class="badge bg-success">
+                                        -{{ product.regular_price|floatformat:2|add:"-"|add:product.promo_price|floatformat:2 }} грн
+                                    </span>
+                                </td>
+                            </tr>
+                            {% if product.promo_ends_at %}
+                            <tr>
+                                <th>Акція до:</th>
+                                <td>{{ product.promo_ends_at|date:"d.m.Y" }}</td>
+                            </tr>
+                            {% endif %}
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <h5 class="text-muted">Магазин</h5>
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <i class="bi bi-shop"></i> {{ product.store.name }}
+                            </h6>
+                            <p class="card-text mb-1">
+                                <i class="bi bi-geo-alt"></i> <strong>Місто:</strong> {{ product.store.city }}
+                            </p>
+                            <p class="card-text">
+                                <i class="bi bi-pin-map"></i> <strong>Адреса:</strong> {{ product.store.address }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row text-muted small">
+                    <div class="col-md-6">
+                        <i class="bi bi-calendar-plus"></i> <strong>Створено:</strong> 
+                        {{ product.created_at|date:"d.m.Y H:i" }}
+                    </div>
+                    <div class="col-md-6">
+                        <i class="bi bi-calendar-check"></i> <strong>Оновлено:</strong> 
+                        {{ product.updated_at|date:"d.m.Y H:i" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0"><i class="bi bi-gear"></i> Дії</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'product_update' product.id %}" class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Редагувати продукт
+                    </a>
+                    
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="bi bi-trash"></i> Видалити продукт
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        {% if product.product_type.description %}
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h6 class="mb-0">Про тип продукту</h6>
+            </div>
+            <div class="card-body">
+                <p class="small mb-0">{{ product.product_type.description }}</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="bi bi-exclamation-triangle"></i> Підтвердження видалення
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Ви впевнені, що хочете видалити продукт <strong>"{{ product.name }}"</strong>?</p>
+                <p class="text-danger mb-0">
+                    <i class="bi bi-info-circle"></i> Цю дію неможливо буде скасувати!
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Скасувати
+                </button>
+                <form method="post" action="{% url 'product_delete' product.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Так, видалити
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

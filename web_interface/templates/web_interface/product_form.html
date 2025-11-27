@@ -1,0 +1,219 @@
+{% extends "web_interface/base.html" %}
+
+{% block title %}
+    {% if form.instance.pk %}
+        Редагувати продукт - {{ form.instance.name }}
+    {% else %}
+        Додати новий продукт
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'product_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Назад до списку
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">
+                    {% if form.instance.pk %}
+                        <i class="bi bi-pencil"></i> Редагувати продукт
+                    {% else %}
+                        <i class="bi bi-plus-circle"></i> Додати новий продукт
+                    {% endif %}
+                </h2>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            <strong>Помилки форми:</strong>
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <fieldset class="mb-4">
+                        <legend class="h5 text-muted border-bottom pb-2">
+                            <i class="bi bi-info-circle"></i> Основна інформація
+                        </legend>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                {{ form.name.label }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.name.errors }}
+                                </div>
+                            {% endif %}
+                            {% if form.name.help_text %}
+                                <div class="form-text">{{ form.name.help_text }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                {{ form.description.label }}
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.description.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.sku.id_for_label }}" class="form-label">
+                                {{ form.sku.label }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            {{ form.sku }}
+                            {% if form.sku.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.sku.errors }}
+                                </div>
+                            {% endif %}
+                            {% if form.sku.help_text %}
+                                <div class="form-text">{{ form.sku.help_text }}</div>
+                            {% endif %}
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="mb-4">
+                        <legend class="h5 text-muted border-bottom pb-2">
+                            <i class="bi bi-tags"></i> Категорія та локація
+                        </legend>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.product_type.id_for_label }}" class="form-label">
+                                    {{ form.product_type.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.product_type }}
+                                {% if form.product_type.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.product_type.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.store.id_for_label }}" class="form-label">
+                                    {{ form.store.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                {{ form.store }}
+                                {% if form.store.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.store.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="mb-4">
+                        <legend class="h5 text-muted border-bottom pb-2">
+                            <i class="bi bi-currency-dollar"></i> Ціни та акції
+                        </legend>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.regular_price.id_for_label }}" class="form-label">
+                                    {{ form.regular_price.label }}
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    {{ form.regular_price }}
+                                    <span class="input-group-text">грн</span>
+                                </div>
+                                {% if form.regular_price.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.regular_price.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.promo_price.id_for_label }}" class="form-label">
+                                    {{ form.promo_price.label }}
+                                </label>
+                                <div class="input-group">
+                                    {{ form.promo_price }}
+                                    <span class="input-group-text">грн</span>
+                                </div>
+                                {% if form.promo_price.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.promo_price.errors }}
+                                    </div>
+                                {% endif %}
+                                {% if form.promo_price.help_text %}
+                                    <div class="form-text">{{ form.promo_price.help_text }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.promo_ends_at.id_for_label }}" class="form-label">
+                                {{ form.promo_ends_at.label }}
+                            </label>
+                            {{ form.promo_ends_at }}
+                            {% if form.promo_ends_at.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.promo_ends_at.errors }}
+                                </div>
+                            {% endif %}
+                            {% if form.promo_ends_at.help_text %}
+                                <div class="form-text">{{ form.promo_ends_at.help_text }}</div>
+                            {% endif %}
+                        </div>
+                    </fieldset>
+
+                    <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                        <a href="{% url 'product_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Скасувати
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i>
+                            {% if form.instance.pk %}
+                                Зберегти зміни
+                            {% else %}
+                                Створити продукт
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="alert alert-info mt-3" role="alert">
+            <i class="bi bi-lightbulb"></i> <strong>Підказка:</strong>
+            Поля позначені <span class="text-danger">*</span> є обов'язковими для заповнення.
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const errorFields = document.querySelectorAll('.invalid-feedback');
+        errorFields.forEach(function(errorField) {
+            const input = errorField.previousElementSibling;
+            if (input && (input.tagName === 'INPUT' || input.tagName === 'SELECT' || input.tagName === 'TEXTAREA')) {
+                input.classList.add('is-invalid');
+            }
+        });
+    });
+</script>
+{% endblock %}

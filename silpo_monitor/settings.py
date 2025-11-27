@@ -22,6 +22,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "monitoring.apps.MonitoringConfig",
+    "web_interface.apps.WebInterfaceConfig",
 ]
 
 MIDDLEWARE = [
@@ -61,9 +62,9 @@ if DB_BACKEND == "mysql":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.mysql",
-            "NAME": os.getenv("MYSQL_DATABASE", "pivo_db"),
+            "NAME": os.getenv("MYSQL_DATABASE", "silpo_monitor"),
             "USER": os.getenv("MYSQL_USER", "root"),
-            "PASSWORD": os.getenv("MYSQL_PASSWORD", "1234"),
+            "PASSWORD": os.getenv("MYSQL_PASSWORD", ""),
             "HOST": os.getenv("MYSQL_HOST", "127.0.0.1"),
             "PORT": os.getenv("MYSQL_PORT", "3306"),
             "OPTIONS": {
