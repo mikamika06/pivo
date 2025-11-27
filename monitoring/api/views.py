@@ -1,7 +1,7 @@
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from monitoring.repositories import repository_registry
@@ -127,7 +127,7 @@ class StoreViewSet(viewsets.ViewSet):
 
 class ProductViewSet(viewsets.ViewSet):
     serializer_class = ProductSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get_repository(self):
         return repository_registry.products

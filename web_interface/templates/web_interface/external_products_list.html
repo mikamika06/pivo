@@ -29,21 +29,28 @@
                 
                 <ul class="list-unstyled mt-3">
                     <li><strong>Ціна:</strong> 
-                        {% if product.price %}
-                        <span class="text-success fw-bold">{{ product.price }} грн</span>
+                        {% if product.promo_price %}
+                        <span class="text-danger fw-bold">{{ product.promo_price }} грн</span>
+                        <small class="text-muted"><s>{{ product.regular_price }} грн</s></small>
+                        {% elif product.regular_price %}
+                        <span class="text-success fw-bold">{{ product.regular_price }} грн</span>
                         {% else %}
                         <span class="text-muted">—</span>
                         {% endif %}
                     </li>
                     <li><strong>Магазин:</strong> 
-                        {% if product.store %}
+                        {% if product.store_info %}
+                        <i class="bi bi-shop"></i> {{ product.store_info.name }}
+                        {% elif product.store.name %}
                         <i class="bi bi-shop"></i> {{ product.store.name }}
                         {% else %}
                         <span class="text-muted">—</span>
                         {% endif %}
                     </li>
                     <li><strong>Тип:</strong> 
-                        {% if product.product_type %}
+                        {% if product.product_type_info %}
+                        <i class="bi bi-tag"></i> {{ product.product_type_info.name }}
+                        {% elif product.product_type.name %}
                         <i class="bi bi-tag"></i> {{ product.product_type.name }}
                         {% else %}
                         <span class="text-muted">—</span>

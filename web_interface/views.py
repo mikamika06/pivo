@@ -1,22 +1,48 @@
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from monitoring.models import Product
 from .forms import ProductForm
+from .network_helper import NetworkHelper
 
 
 def product_list_view(request):
-    products = Product.objects.select_related('product_type', 'store').all()
-    context = {
-        'products': products
-    }
+    api_helper = NetworkHelper("http://127.0.0.1:8000/api/products")
+    products_data = api_helper.get_list()
+    
+    if products_data:
+        context = {
+            'products': products_data,
+            'api_used': True
+        }
+    else:
+        products = Product.objects.select_related('product_type', 'store').all()
+        context = {
+            'products': products,
+            'api_used': False,
+            'error': 'API недоступне, показано дані з локальної БД'
+        }
+    
     return render(request, 'web_interface/product_list.html', context)
 
 
 def product_detail_view(request, pk):
-    product = get_object_or_404(Product, pk=pk)
-    context = {
-        'product': product
-    }
+    api_helper = NetworkHelper("http://127.0.0.1:8000/api/products")
+    product_data = api_helper.get_by_id(pk)
+    
+    if product_data:
+        context = {
+            'product': product_data,
+            'api_used': True
+        }
+    else:
+        product = get_object_or_404(Product, pk=pk)
+        context = {
+            'product': product,
+            'api_used': False,
+            'error': 'API недоступне, показано дані з локальної БД'
+        }
+    
     return render(request, 'web_interface/product_detail.html', context)
 
 
