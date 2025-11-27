@@ -69,3 +69,23 @@ def product_delete_view(request, pk):
     }
     return render(request, 'web_interface/product_detail.html', context)
 
+def external_products_list_view(request):
+    products = Product.objects.select_related('product_type', 'store').all()
+    
+    context = {
+        'products': products,
+    }
+    
+    return render(request, 'web_interface/external_products_list.html', context)
+
+
+def external_product_delete_view(request, pk):
+    if request.method == 'POST':
+        product = get_object_or_404(Product, pk=pk)
+        product_name = product.name
+        product.delete()
+        messages.success(request, f'Продукт "{product_name}" успішно видалено з каталогу')
+    
+    return redirect('external_products_list')
+
+

@@ -1,0 +1,94 @@
+{% extends 'web_interface/base.html' %}
+
+{% block title %}Каталог продуктів - Silpo Monitor{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1 class="display-4">
+            <i class="bi bi-grid-3x3-gap"></i> Каталог продуктів
+        </h1>
+        <p class="lead text-muted">Альтернативний вигляд продуктів у вигляді каталогу</p>
+    </div>
+</div>
+
+{% if products %}
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for product in products %}
+    <div class="col">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">{{ product.name }}</h5>
+            </div>
+            <div class="card-body">
+                {% if product.description %}
+                <p class="card-text text-muted">{{ product.description|truncatewords:15 }}</p>
+                {% else %}
+                <p class="card-text text-muted fst-italic">Опис відсутній</p>
+                {% endif %}
+                
+                <ul class="list-unstyled mt-3">
+                    <li><strong>Ціна:</strong> 
+                        {% if product.price %}
+                        <span class="text-success fw-bold">{{ product.price }} грн</span>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </li>
+                    <li><strong>Магазин:</strong> 
+                        {% if product.store %}
+                        <i class="bi bi-shop"></i> {{ product.store.name }}
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </li>
+                    <li><strong>Тип:</strong> 
+                        {% if product.product_type %}
+                        <i class="bi bi-tag"></i> {{ product.product_type.name }}
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </li>
+                </ul>
+            </div>
+            <div class="card-footer bg-light">
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="{% url 'product_detail' product.id %}" class="btn btn-sm btn-outline-info">
+                        <i class="bi bi-eye"></i> Деталі
+                    </a>
+                    <a href="{% url 'product_update' product.id %}" class="btn btn-sm btn-outline-warning">
+                        <i class="bi bi-pencil"></i> Редагувати
+                    </a>
+                    <form method="post" action="{% url 'external_product_delete' product.id %}" style="display: inline;" onsubmit="return confirm('Ви впевнені що хочете видалити {{ product.name }}?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="mt-4">
+    <div class="alert alert-info" role="alert">
+        <i class="bi bi-info-circle"></i> Знайдено продуктів: <strong>{{ products|length }}</strong>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-warning" role="alert">
+    <i class="bi bi-exclamation-triangle"></i> Не знайдено жодного продукту в каталозі
+</div>
+{% endif %}
+
+<div class="mt-4">
+    <a href="{% url 'product_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> До табличного вигляду
+    </a>
+    <a href="{% url 'product_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Додати новий продукт
+    </a>
+</div>
+{% endblock %}
