@@ -1,0 +1,101 @@
+{% extends "web_interface/base.html" %}
+
+{% block title %}Список продуктів - Silpo Monitor{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-basket3"></i> Список продуктів</h1>
+    <a href="{% url 'product_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Додати новий продукт
+    </a>
+</div>
+
+{% if products %}
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead class="table-dark">
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">Назва</th>
+                            <th scope="col">SKU</th>
+                            <th scope="col">Тип продукту</th>
+                            <th scope="col">Магазин</th>
+                            <th scope="col">Звичайна ціна</th>
+                            <th scope="col">Акційна ціна</th>
+                            <th scope="col">Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr>
+                            <td>{{ product.id }}</td>
+                            <td>
+                                <strong>{{ product.name }}</strong>
+                                {% if not product.is_active %}
+                                    <span class="badge bg-secondary">Неактивний</span>
+                                {% endif %}
+                            </td>
+                            <td><code>{{ product.sku }}</code></td>
+                            <td>
+                                <span class="badge bg-info text-dark">
+                                    {{ product.product_type.name }}
+                                </span>
+                            </td>
+                            <td>
+                                <i class="bi bi-geo-alt"></i> {{ product.store.name }}
+                                <small class="text-muted d-block">{{ product.store.city }}</small>
+                            </td>
+                            <td>
+                                <strong>{{ product.regular_price }} грн</strong>
+                            </td>
+                            <td>
+                                {% if product.promo_price %}
+                                    <span class="badge bg-danger">
+                                        {{ product.promo_price }} грн
+                                    </span>
+                                    {% if product.promo_ends_at %}
+                                        <small class="d-block text-muted">
+                                            до {{ product.promo_ends_at|date:"d.m.Y" }}
+                                        </small>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'product_detail' product.id %}" 
+                                       class="btn btn-outline-primary" 
+                                       title="Деталі">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{% url 'product_update' product.id %}" 
+                                       class="btn btn-outline-warning" 
+                                       title="Редагувати">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer text-muted">
+            Всього продуктів: <strong>{{ products.count }}</strong>
+        </div>
+    </div>
+{% else %}
+    <div class="alert alert-info text-center" role="alert">
+        <i class="bi bi-info-circle fs-1 d-block mb-3"></i>
+        <h4>Продуктів поки немає</h4>
+        <p class="mb-3">Додайте перший продукт, щоб почати працювати з системою.</p>
+        <a href="{% url 'product_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Додати продукт
+        </a>
+    </div>
+{% endif %}
+{% endblock %}
