@@ -66,7 +66,7 @@
                     <a href="{% url 'product_update' product.id %}" class="btn btn-sm btn-outline-warning">
                         <i class="bi bi-pencil"></i> Редагувати
                     </a>
-                    <form method="post" action="{% url 'external_product_delete' product.id %}" style="display: inline;" onsubmit="return confirm('Ви впевнені що хочете видалити {{ product.name }}?');">
+                    <form method="post" action="{% url 'external_product_delete' product.id %}" class="inline-form" onsubmit="return confirm('Ви впевнені що хочете видалити {{ product.name }}?');">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-sm btn-outline-danger">
                             <i class="bi bi-trash"></i>
