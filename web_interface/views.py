@@ -1,13 +1,53 @@
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import AuthenticationForm
 from monitoring.models import Product
 from .forms import ProductForm
 from .network_helper import NetworkHelper
 
 
+def home_redirect_view(request):
+    if request.user.is_authenticated:
+        return redirect('/products/')
+    return redirect('/products/login/')
+
+
+def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('/products/')
+    
+    if request.method == 'POST':
+        form = AuthenticationForm(data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            next_url = request.GET.get('next', '/products/')
+            return redirect(next_url)
+        else:
+            messages.error(request, 'Невірні дані для входу')
+    else:
+        form = AuthenticationForm()
+    
+    return render(request, 'web_interface/login.html', {'form': form})
+
+
+def logout_view(request):
+    logout(request)
+    messages.success(request, 'Ви успішно вийшли з системи')
+    return redirect('/products/login/')
+
+
+@login_required(login_url='/products/login/')
 def product_list_view(request):
-    api_helper = NetworkHelper("http://127.0.0.1:8000/api/products")
+    session_key = request.session.session_key if hasattr(request.session, 'session_key') else None
+    api_helper = NetworkHelper(
+        "http://127.0.0.1:8000/api/products", 
+        user=request.user,
+        session_key=session_key
+    )
     products_data = api_helper.get_list()
     
     if products_data:
@@ -26,8 +66,14 @@ def product_list_view(request):
     return render(request, 'web_interface/product_list.html', context)
 
 
+@login_required(login_url='/products/login/')
 def product_detail_view(request, pk):
-    api_helper = NetworkHelper("http://127.0.0.1:8000/api/products")
+    session_key = request.session.session_key if hasattr(request.session, 'session_key') else None
+    api_helper = NetworkHelper(
+        "http://127.0.0.1:8000/api/products", 
+        user=request.user,
+        session_key=session_key
+    )
     product_data = api_helper.get_by_id(pk)
     
     if product_data:
@@ -46,6 +92,7 @@ def product_detail_view(request, pk):
     return render(request, 'web_interface/product_detail.html', context)
 
 
+@login_required(login_url='/products/login/')
 def product_create_view(request):
     if request.method == 'POST':
         form = ProductForm(request.POST)
@@ -62,6 +109,7 @@ def product_create_view(request):
     return render(request, 'web_interface/product_form.html', context)
 
 
+@login_required(login_url='/products/login/')
 def product_update_view(request, pk):
     product = get_object_or_404(Product, pk=pk)
     
@@ -81,6 +129,7 @@ def product_update_view(request, pk):
     return render(request, 'web_interface/product_form.html', context)
 
 
+@login_required(login_url='/products/login/')
 def product_delete_view(request, pk):
     product = get_object_or_404(Product, pk=pk)
     
@@ -95,6 +144,7 @@ def product_delete_view(request, pk):
     }
     return render(request, 'web_interface/product_detail.html', context)
 
+@login_required(login_url='/products/login/')
 def external_products_list_view(request):
     products = Product.objects.select_related('product_type', 'store').all()
     
@@ -105,6 +155,7 @@ def external_products_list_view(request):
     return render(request, 'web_interface/external_products_list.html', context)
 
 
+@login_required(login_url='/products/login/')
 def external_product_delete_view(request, pk):
     if request.method == 'POST':
         product = get_object_or_404(Product, pk=pk)
