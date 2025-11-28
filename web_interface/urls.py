@@ -2,6 +2,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
     path('', views.product_list_view, name='product_list'),
     path('<int:pk>/', views.product_detail_view, name='product_detail'),
     path('create/', views.product_create_view, name='product_create'),

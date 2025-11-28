@@ -1,19 +1,44 @@
 import requests
 from requests.auth import HTTPBasicAuth
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List, Any, TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from django.contrib.auth.models import User
 
 class NetworkHelper:
     
-    def __init__(self, base_url: str, username: Optional[str] = None, password: Optional[str] = None):
+    def __init__(self, base_url: str, username: Optional[str] = None, password: Optional[str] = None, 
+                 token: Optional[str] = None, session_key: Optional[str] = None, user: Optional['User'] = None):
         self.base_url = base_url.rstrip('/')
         self.auth = None
+        self.headers = {}
+        self.session = requests.Session()
+        
+        # HTTP Basic Auth
         if username and password:
             self.auth = HTTPBasicAuth(username, password)
+        
+        # Token-based auth
+        elif token:
+            self.headers['Authorization'] = f'Token {token}'
+        
+        # Django session auth
+        elif session_key:
+            self.session.cookies['sessionid'] = session_key
+        
+        # User-based auth (get from Django session)
+        elif user and user.is_authenticated:
+            # Можна додати логіку для отримання токену користувача
+            pass
     
     def get_list(self) -> List[Dict[str, Any]]:
         try:
-            response = requests.get(f"{self.base_url}/", auth=self.auth, timeout=10)
+            response = self.session.get(
+                f"{self.base_url}/", 
+                auth=self.auth, 
+                headers=self.headers, 
+                timeout=10
+            )
             response.raise_for_status()
             return response.json()
         except requests.exceptions.ConnectionError:
@@ -34,7 +59,12 @@ class NetworkHelper:
     
     def get_by_id(self, obj_id: int) -> Optional[Dict[str, Any]]:
         try:
-            response = requests.get(f"{self.base_url}/{obj_id}/", auth=self.auth, timeout=10)
+            response = self.session.get(
+                f"{self.base_url}/{obj_id}/", 
+                auth=self.auth, 
+                headers=self.headers, 
+                timeout=10
+            )
             response.raise_for_status()
             return response.json()
         except requests.exceptions.ConnectionError:
@@ -58,10 +88,11 @@ class NetworkHelper:
     
     def create(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         try:
-            response = requests.post(
+            response = self.session.post(
                 f"{self.base_url}/",
                 json=data,
                 auth=self.auth,
+                headers=self.headers,
                 timeout=10
             )
             response.raise_for_status()
@@ -86,11 +117,12 @@ class NetworkHelper:
     
     def update(self, obj_id: int, data: Dict[str, Any], partial: bool = False) -> Optional[Dict[str, Any]]:
         try:
-            method = requests.patch if partial else requests.put
+            method = self.session.patch if partial else self.session.put
             response = method(
                 f"{self.base_url}/{obj_id}/",
                 json=data,
                 auth=self.auth,
+                headers=self.headers,
                 timeout=10
             )
             response.raise_for_status()
@@ -118,9 +150,10 @@ class NetworkHelper:
     
     def delete(self, obj_id: int) -> bool:
         try:
-            response = requests.delete(
+            response = self.session.delete(
                 f"{self.base_url}/{obj_id}/",
                 auth=self.auth,
+                headers=self.headers,
                 timeout=10
             )
             response.raise_for_status()
