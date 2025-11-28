@@ -11,9 +11,11 @@ router.register("stores", StoreViewSet, basename="store")
 router.register("products", ProductViewSet, basename="product")
 
 urlpatterns = [
-    path("", home_redirect_view, name="home"),  # Редірект з головної сторінки
+    path("", home_redirect_view, name="home"),  
     path("admin/", admin.site.urls),
     path("api/", include(router.urls)),
     path("api-auth/", include("rest_framework.urls", namespace="rest_framework")),
     path("products/", include("web_interface.urls")),
 ]
+
+handler404 = 'web_interface.views.custom_404_view'
