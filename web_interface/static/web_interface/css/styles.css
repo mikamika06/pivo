@@ -1,0 +1,44 @@
+/* Custom styles for Silpo Monitor */
+
+/* Inline form elements */
+.inline-form {
+    display: inline;
+}
+
+/* Additional utility classes */
+.text-truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Custom card hover effect */
+.card-hover:hover {
+    transform: translateY(-5px);
+    transition: transform 0.3s ease;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Price badge styling */
+.price-regular {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.price-promo {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #dc3545;
+}
+
+/* Status badges */
+.status-active {
+    background-color: #28a745;
+    color: white;
+}
+
+.status-inactive {
+    background-color: #6c757d;
+    color: white;
+}

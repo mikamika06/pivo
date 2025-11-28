@@ -208,7 +208,7 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="bi bi-x-circle"></i> Скасувати
                 </button>
-                <form method="post" action="{% url 'product_delete' product.id %}" style="display: inline;">
+                <form method="post" action="{% url 'product_delete' product.id %}" class="inline-form">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger">
                         <i class="bi bi-trash"></i> Так, видалити
