@@ -9,6 +9,10 @@ from .forms import ProductForm
 from .network_helper import NetworkHelper
 
 
+def custom_404_view(request, exception=None):
+    return render(request, 'web_interface/404.html', status=404)
+
+
 def home_redirect_view(request):
     if request.user.is_authenticated:
         return redirect('/products/')

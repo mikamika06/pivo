@@ -19,3 +19,8 @@
     transition: transform 0.3s ease;
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
+
+/* 404 page icon size */
+.error-icon-404 {
+    font-size: 6rem;
+}
