@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
+from django.core.paginator import Paginator
 from monitoring.models import Product
 from .forms import ProductForm
 from .network_helper import NetworkHelper
@@ -55,14 +56,26 @@ def product_list_view(request):
     products_data = api_helper.get_list()
     
     if products_data:
+        # Пагінація для API даних
+        paginator = Paginator(products_data, 20)  # 20 продуктів на сторінку
+        page_number = request.GET.get('page', 1)
+        page_obj = paginator.get_page(page_number)
+        
         context = {
-            'products': products_data,
+            'products': page_obj,
+            'page_obj': page_obj,
             'api_used': True
         }
     else:
         products = Product.objects.select_related('product_type', 'store').all()
+        # Пагінація для локальних даних
+        paginator = Paginator(products, 20)
+        page_number = request.GET.get('page', 1)
+        page_obj = paginator.get_page(page_number)
+        
         context = {
-            'products': products,
+            'products': page_obj,
+            'page_obj': page_obj,
             'api_used': False,
             'error': 'API недоступне, показано дані з локальної БД'
         }
@@ -152,8 +165,14 @@ def product_delete_view(request, pk):
 def external_products_list_view(request):
     products = Product.objects.select_related('product_type', 'store').all()
     
+    # Пагінація
+    paginator = Paginator(products, 20)  # 20 продуктів на сторінку
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
     context = {
-        'products': products,
+        'products': page_obj,
+        'page_obj': page_obj,
     }
     
     return render(request, 'web_interface/external_products_list.html', context)

@@ -26,6 +26,11 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">
+                            <i class="fas fa-home"></i> Головна
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link active" href="{% url 'dashboard_v1' %}">
                             <i class="fas fa-tachometer-alt"></i> Дашборд
                         </a>
@@ -79,89 +84,6 @@
                         <p>Товарів</p>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="card mb-4">
-            <div class="card-header bg-light">
-                <h5 class="mb-0">
-                    <i class="fas fa-filter"></i> Фільтри
-                    <button class="btn btn-sm btn-outline-secondary float-end" onclick="resetFilters()">
-                        <i class="fas fa-undo"></i> Скинути
-                    </button>
-                </h5>
-            </div>
-            <div class="card-body">
-                <form id="filters-form" method="get" action="{% url 'dashboard_v1' %}">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <label for="city" class="form-label">
-                                <i class="fas fa-map-marker-alt"></i> Місто
-                            </label>
-                            <select class="form-select" id="city" name="city">
-                                <option value="">Всі міста</option>
-                                {% for city_option in cities %}
-                                <option value="{{ city_option }}" 
-                                    {% if city_option == selected_city %}selected{% endif %}>
-                                    {{ city_option }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="col-md-3">
-                            <label for="product_type" class="form-label">
-                                <i class="fas fa-box"></i> Тип продукту
-                            </label>
-                            <select class="form-select" id="product_type" name="product_type">
-                                <option value="">Всі типи</option>
-                                {% for pt in product_types %}
-                                <option value="{{ pt.id }}" 
-                                    {% if pt.id|stringformat:"s" == selected_product_type|stringformat:"s" %}selected{% endif %}>
-                                    {{ pt.name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        <div class="col-md-2">
-                            <label for="date_from" class="form-label">
-                                <i class="fas fa-calendar"></i> Дата від
-                            </label>
-                            <input type="date" class="form-control" id="date_from" name="date_from" 
-                                value="{{ date_from }}">
-                        </div>
-
-                        <div class="col-md-2">
-                            <label for="date_to" class="form-label">
-                                <i class="fas fa-calendar"></i> Дата до
-                            </label>
-                            <input type="date" class="form-control" id="date_to" name="date_to" 
-                                value="{{ date_to }}">
-                        </div>
-
-                        <div class="col-md-2 d-flex align-items-end">
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="fas fa-search"></i> Застосувати
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="row mt-3">
-                        <div class="col-md-6">
-                            <label for="price_min" class="form-label">
-                                <i class="fas fa-hryvnia-sign"></i> Ціновий діапазон: 
-                                <span id="price_range_display">{{ price_min }} - {{ price_max }} грн</span>
-                            </label>
-                            <div class="d-flex gap-3 align-items-center">
-                                <input type="range" class="form-range" id="price_min" name="price_min" 
-                                    min="0" max="10000" step="10" value="{{ price_min }}">
-                                <input type="range" class="form-range" id="price_max" name="price_max" 
-                                    min="0" max="10000" step="10" value="{{ price_max }}">
-                            </div>
-                        </div>
-                    </div>
-                </form>
             </div>
         </div>
 
@@ -228,6 +150,135 @@
                     </div>
                     <div class="card-body">
                         {{ chart6|safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Таблиця продуктів з пагінацією -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list"></i> Список продуктів
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Назва</th>
+                                        <th>Тип</th>
+                                        <th>Магазин</th>
+                                        <th>Місто</th>
+                                        <th>Ціна</th>
+                                        <th>Промо</th>
+                                        <th>Дата створення</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for product in page_obj %}
+                                    <tr>
+                                        <td><strong>{{ product.name }}</strong></td>
+                                        <td><span class="badge bg-primary">{{ product.product_type.name }}</span></td>
+                                        <td>{{ product.store.name }}</td>
+                                        <td>{{ product.store.city }}</td>
+                                        <td>
+                                            {% if product.promo_price %}
+                                                <span class="text-decoration-line-through text-muted">{{ product.regular_price }} грн</span>
+                                                <span class="text-danger fw-bold">{{ product.promo_price }} грн</span>
+                                            {% else %}
+                                                <span class="fw-bold">{{ product.regular_price }} грн</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if product.promo_price %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-tag"></i> Акція
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-minus"></i> Немає
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ product.created_at|date:"d.m.Y H:i" }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="7" class="text-center text-muted">
+                                            <i class="fas fa-inbox"></i> Продуктів не знайдено
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Пагінація -->
+                        {% if page_obj.has_other_pages %}
+                        <nav aria-label="Пагінація продуктів" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1" aria-label="Перша">
+                                            <span aria-hidden="true">&laquo;&laquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Попередня">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&laquo;&laquo;</span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&laquo;</span>
+                                    </li>
+                                {% endif %}
+
+                                {% for num in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == num %}
+                                        <li class="page-item active" aria-current="page">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Наступна">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}" aria-label="Остання">
+                                            <span aria-hidden="true">&raquo;&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&raquo;</span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&raquo;&raquo;</span>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                            <p class="text-center text-muted">
+                                Сторінка {{ page_obj.number }} з {{ page_obj.paginator.num_pages }} 
+                                (всього {{ page_obj.paginator.count }} продуктів)
+                            </p>
+                        </nav>
+                        {% endif %}
                     </div>
                 </div>
             </div>

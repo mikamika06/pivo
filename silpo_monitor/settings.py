@@ -4,7 +4,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "django-insecure-example-secret"
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS: list[str] = ['testserver', 'localhost', '127.0.0.1']
 
 INSTALLED_APPS = [
@@ -50,7 +50,7 @@ WSGI_APPLICATION = "silpo_monitor.wsgi.application"
 ASGI_APPLICATION = "silpo_monitor.asgi.application"
 
 
-DB_BACKEND = os.getenv("DJANGO_DB_BACKEND", "mysql").lower()
+DB_BACKEND = os.getenv("DJANGO_DB_BACKEND", "sqlite").lower()
 
 if DB_BACKEND == "mysql":
     DATABASES = {

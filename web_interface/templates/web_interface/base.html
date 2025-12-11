@@ -41,6 +41,22 @@
                                 <i class="bi bi-grid-3x3-gap"></i> Каталог продуктів
                             </a>
                         </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-bar-chart"></i> Дашборди
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'dashboard_v1' %}">
+                                    <i class="bi bi-graph-up"></i> Дашборд v1 (Plotly)
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'dashboard_v2' %}">
+                                    <i class="bi bi-bar-chart-line"></i> Дашборд v2 (Bokeh)
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'performance_dashboard' %}">
+                                    <i class="bi bi-speedometer2"></i> Продуктивність
+                                </a></li>
+                            </ul>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link" href="/admin/">
                                 <i class="bi bi-gear"></i> Адмінка
