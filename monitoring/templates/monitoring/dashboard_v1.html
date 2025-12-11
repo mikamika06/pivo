@@ -1,0 +1,250 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дашборд аналітики - Silpo Monitor</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="{% static 'monitoring/css/dashboard.css' %}">
+    
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-chart-line"></i> Silpo Monitor
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'dashboard_v1' %}">
+                            <i class="fas fa-tachometer-alt"></i> Дашборд
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin/">
+                            <i class="fas fa-cog"></i> Адмін
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <span class="nav-link">
+                            <i class="fas fa-user"></i> {{ user.username }}
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="stats-card">
+                    <div class="stats-icon bg-primary">
+                        <i class="fas fa-store"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3>{{ stats.total_stores }}</h3>
+                        <p>Магазинів</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stats-card">
+                    <div class="stats-icon bg-success">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3>{{ stats.total_product_types }}</h3>
+                        <p>Типів продуктів</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stats-card">
+                    <div class="stats-icon bg-info">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h3>{{ stats.total_products|floatformat:0 }}</h3>
+                        <p>Товарів</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-filter"></i> Фільтри
+                    <button class="btn btn-sm btn-outline-secondary float-end" onclick="resetFilters()">
+                        <i class="fas fa-undo"></i> Скинути
+                    </button>
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="filters-form" method="get" action="{% url 'dashboard_v1' %}">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label for="city" class="form-label">
+                                <i class="fas fa-map-marker-alt"></i> Місто
+                            </label>
+                            <select class="form-select" id="city" name="city">
+                                <option value="">Всі міста</option>
+                                {% for city_option in cities %}
+                                <option value="{{ city_option }}" 
+                                    {% if city_option == selected_city %}selected{% endif %}>
+                                    {{ city_option }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label for="product_type" class="form-label">
+                                <i class="fas fa-box"></i> Тип продукту
+                            </label>
+                            <select class="form-select" id="product_type" name="product_type">
+                                <option value="">Всі типи</option>
+                                {% for pt in product_types %}
+                                <option value="{{ pt.id }}" 
+                                    {% if pt.id|stringformat:"s" == selected_product_type|stringformat:"s" %}selected{% endif %}>
+                                    {{ pt.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="date_from" class="form-label">
+                                <i class="fas fa-calendar"></i> Дата від
+                            </label>
+                            <input type="date" class="form-control" id="date_from" name="date_from" 
+                                value="{{ date_from }}">
+                        </div>
+
+                        <div class="col-md-2">
+                            <label for="date_to" class="form-label">
+                                <i class="fas fa-calendar"></i> Дата до
+                            </label>
+                            <input type="date" class="form-control" id="date_to" name="date_to" 
+                                value="{{ date_to }}">
+                        </div>
+
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search"></i> Застосувати
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label for="price_min" class="form-label">
+                                <i class="fas fa-hryvnia-sign"></i> Ціновий діапазон: 
+                                <span id="price_range_display">{{ price_min }} - {{ price_max }} грн</span>
+                            </label>
+                            <div class="d-flex gap-3 align-items-center">
+                                <input type="range" class="form-range" id="price_min" name="price_min" 
+                                    min="0" max="10000" step="10" value="{{ price_min }}">
+                                <input type="range" class="form-range" id="price_max" name="price_max" 
+                                    min="0" max="10000" step="10" value="{{ price_max }}">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-6 mb-4">
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-bar"></i> Середні ціни за типами продукту</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ chart1|safe }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-area"></i> Статистика магазинів за містами</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ chart2|safe }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-medal"></i> Топ-10 найдорожчих продуктів</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ chart3|safe }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-pie"></i> Розподіл товарів за ціновими діапазонами</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ chart4|safe }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-tags"></i> Аналіз промо-акцій</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ chart5|safe }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6 mb-4">
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-chart-line"></i> Динаміка додавання товарів</h5>
+                    </div>
+                    <div class="card-body">
+                        {{ chart6|safe }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light text-center py-3 mt-5">
+        <div class="container">
+            <p class="mb-0 text-muted">
+                <i class="fas fa-copyright"></i> 2024 Silpo Monitor Dashboard | 
+                Розроблено з <i class="fas fa-heart text-danger"></i>
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script src="{% static 'monitoring/js/dashboard_plotly.js' %}"></script>
+</body>
+</html>
