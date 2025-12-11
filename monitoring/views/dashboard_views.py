@@ -1,5 +1,4 @@
 from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
 from monitoring.repositories.analytics import AnalyticsRepository
 from monitoring.charts.plotly_charts import PlotlyChartsGenerator
 from monitoring.models import Store, ProductType
@@ -10,7 +9,6 @@ from datetime import datetime
 analytics_repo = AnalyticsRepository()
 
 
-@login_required
 def dashboard_v1_view(request):
     city = request.GET.get('city', None)
     product_type_id = request.GET.get('product_type', None)

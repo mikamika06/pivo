@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.urls import include, path
+from django.conf import settings
+from django.conf.urls.static import static
 from rest_framework.routers import DefaultRouter
 from web_interface.views import home_redirect_view
 
@@ -13,6 +15,8 @@ from monitoring.api.analytics_views import (
     product_creation_dynamics_view
 )
 from monitoring.views.dashboard_views import dashboard_v1_view
+from monitoring.views.dashboard_bokeh_views import dashboard_v2_view
+from monitoring.views.performance_views import performance_dashboard_view
 
 router = DefaultRouter()
 router.register("product-types", ProductTypeViewSet, basename="product-type")
@@ -32,6 +36,8 @@ urlpatterns = [
     path("api/analytics/promo-analysis/", promo_analysis_by_store_view, name="analytics-promo"),
     path("api/analytics/product-creation-dynamics/", product_creation_dynamics_view, name="analytics-dynamics"),
     path("dashboard/v1/", dashboard_v1_view, name="dashboard_v1"),
+    path("dashboard/v2/", dashboard_v2_view, name="dashboard_v2"),
+    path("dashboard/performance/", performance_dashboard_view, name="performance_dashboard"),
 ]
 
 handler404 = 'web_interface.views.custom_404_view'

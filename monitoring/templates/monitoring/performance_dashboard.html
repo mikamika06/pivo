@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-3.8.1.min.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-gl-3.8.1.min.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.8.1.min.js"></script>
+    <script type="text/javascript" src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.8.1.min.js"></script>
+    {{ exec_time_script|safe }}
+    {{ throughput_script|safe }}
+    {{ heatmap_script|safe }}
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .chart-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #343a40;
+            color: white;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        .stats-card {
+            background-color: #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .optimal-params {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>Performance Dashboard</h1>
+            <p>Аналіз продуктивності паралельних обчислень</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="optimal-params">
+                    <h3>Оптимальні параметри</h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="stats-card">
+                                <h5>Багатопотоковість (Threads)</h5>
+                                <p><strong>Оптимальна кількість воркерів:</strong> {{ optimal_params.optimal_threads.num_workers }}</p>
+                                <p><strong>Час виконання:</strong> {{ optimal_params.optimal_threads.execution_time|floatformat:3 }} сек</p>
+                                <p><strong>Пропускна здатність:</strong> {{ optimal_params.optimal_threads.throughput|floatformat:2 }} req/s</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="stats-card">
+                                <h5>Багатопроцесність (Processes)</h5>
+                                <p><strong>Оптимальна кількість воркерів:</strong> {{ optimal_params.optimal_processes.num_workers }}</p>
+                                <p><strong>Час виконання:</strong> {{ optimal_params.optimal_processes.execution_time|floatformat:3 }} сек</p>
+                                <p><strong>Пропускна здатність:</strong> {{ optimal_params.optimal_processes.throughput|floatformat:2 }} req/s</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-container">
+                    <h3>Час виконання vs Кількість воркерів</h3>
+                    {{ exec_time_div|safe }}
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-container">
+                    <h3>Пропускна здатність vs Кількість воркерів</h3>
+                    {{ throughput_div|safe }}
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-container">
+                    <h3>Теплова карта часу виконання</h3>
+                    {{ heatmap_div|safe }}
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-container">
+                    <h4>Параметри експерименту</h4>
+                    <form method="get">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="num_queries" class="form-label">Кількість запитів:</label>
+                                <input type="number" class="form-control" id="num_queries" name="num_queries" value="{{ num_queries }}" min="10" max="200">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="max_workers" class="form-label">Максимум воркерів:</label>
+                                <input type="number" class="form-control" id="max_workers" name="max_workers" value="{{ max_workers }}" min="1" max="20">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary mt-3">Запустити експеримент</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12 text-center mb-4">
+                <a href="/dashboard/v2/" class="btn btn-secondary">Повернутися до Dashboard v2</a>
+                <a href="/dashboard/v1/" class="btn btn-secondary">Dashboard v1</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

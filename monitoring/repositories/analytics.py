@@ -1,5 +1,5 @@
 
-from django.db.models import Avg, Count, Sum, F, Q, Case, When, Value, DecimalField, CharField
+from django.db.models import Avg, Count, Sum, F, Q, Case, When, Value, DecimalField, CharField, ExpressionWrapper, FloatField
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from datetime import timedelta
@@ -152,16 +152,24 @@ class AnalyticsRepository:
                 products__is_active=True
             )),
             avg_discount_amount=Avg(
-                F('products__regular_price') - F('products__promo_price'),
+                ExpressionWrapper(
+                    F('products__regular_price') - F('products__promo_price'),
+                    output_field=FloatField()
+                ),
                 filter=Q(products__promo_price__isnull=False, products__is_active=True)
             ),
             avg_discount_percent=Avg(
-                (F('products__regular_price') - F('products__promo_price')) * 100.0 / F('products__regular_price'),
-                filter=Q(products__promo_price__isnull=False, products__is_active=True),
-                output_field=DecimalField()
+                ExpressionWrapper(
+                    (F('products__regular_price') - F('products__promo_price')) * 100.0 / F('products__regular_price'),
+                    output_field=FloatField()
+                ),
+                filter=Q(products__promo_price__isnull=False, products__is_active=True)
             ),
             total_savings=Sum(
-                F('products__regular_price') - F('products__promo_price'),
+                ExpressionWrapper(
+                    F('products__regular_price') - F('products__promo_price'),
+                    output_field=FloatField()
+                ),
                 filter=Q(products__promo_price__isnull=False, products__is_active=True)
             )
         ).values(
