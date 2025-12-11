@@ -4,7 +4,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "django-insecure-example-secret"
-DEBUG = False
+DEBUG = True
 ALLOWED_HOSTS: list[str] = ['testserver', 'localhost', '127.0.0.1']
 
 INSTALLED_APPS = [
@@ -56,9 +56,9 @@ if DB_BACKEND == "mysql":
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.mysql",
-            "NAME": os.getenv("MYSQL_DATABASE", "pivo_db"),
+            "NAME": os.getenv("MYSQL_DATABASE", "silpo_monitor"),
             "USER": os.getenv("MYSQL_USER", "root"),
-            "PASSWORD": os.getenv("MYSQL_PASSWORD", "1234"),
+            "PASSWORD": os.getenv("MYSQL_PASSWORD", ""),
             "HOST": os.getenv("MYSQL_HOST", "127.0.0.1"),
             "PORT": os.getenv("MYSQL_PORT", "3306"),
             "OPTIONS": {
