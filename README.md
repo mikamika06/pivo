@@ -171,7 +171,189 @@ class ProductRepository(BaseRepository[Product]):
 
 ---
 
+## Analytics API Endpoints
+
+### 1. Середні ціни за типами продукту
+**GET** `/api/analytics/avg-prices-by-type/`
+
+Повертає середні регулярні та промо-ціни для кожного типу продукту.
+
+**Відповідь:**
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "product_type_name": "Пиво",
+      "avg_regular_price": 45.50,
+      "avg_promo_price": 38.20,
+      "product_count": 150
+    }
+  ],
+  "shape": [5, 5],
+  "columns": ["id", "product_type_name", "avg_regular_price", "avg_promo_price", "product_count"],
+  "statistics": {
+    "total_product_types": 5,
+    "avg_regular_price_overall": 42.30,
+    "total_products": 520
+  }
+}
+```
+
+---
+
+### 2. Статистика магазинів за містами
+**GET** `/api/analytics/store-statistics/`
+
+**Query Parameters:**
+- `city` (optional) - фільтр по місту
+
+**Відповідь:**
+```json
+{
+  "data": [
+    {
+      "city": "Київ",
+      "store_count": 25,
+      "total_products": 3500,
+      "avg_price": 42.50,
+      "promo_products_count": 450
+    }
+  ],
+  "statistics": {
+    "total_cities": 10,
+    "total_stores": 85,
+    "avg_products_per_store": 147.06
+  }
+}
+```
+
+---
+
+### 3. Топ найдорожчих продуктів
+**GET** `/api/analytics/top-expensive-products/`
+
+**Query Parameters:**
+- `limit` (default: 10) - кількість продуктів
+
+**Відповідь:**
+```json
+{
+  "data": [
+    {
+      "product_name": "Premium Beer",
+      "sku": "BEER-123",
+      "regular_price": 125.00,
+      "promo_price": 99.00,
+      "discount": 26.00,
+      "store_name": "Сільпо Хрещатик",
+      "city": "Київ",
+      "product_type_name": "Пиво"
+    }
+  ],
+  "statistics": {
+    "avg_regular_price": 95.50,
+    "products_with_promo": 7
+  }
+}
+```
+
+---
+
+### 4. Розподіл товарів за ціновими діапазонами
+**GET** `/api/analytics/products-by-price-ranges/`
+
+**Query Parameters:**
+- `product_type` (optional) - фільтр по типу продукту
+
+**Відповідь:**
+```json
+{
+  "data": [
+    {
+      "price_range": "30-60 грн",
+      "product_type_name": "Пиво",
+      "count": 450,
+      "percentage": 35.2
+    }
+  ],
+  "statistics": {
+    "total_products": 1278,
+    "most_popular_range": "30-60 грн"
+  }
+}
+```
+
+---
+
+### 5. Аналіз промо-акцій за магазинами
+**GET** `/api/analytics/promo-analysis/`
+
+**Query Parameters:**
+- `city` (optional) - фільтр по місту
+- `min_promo_products` (optional) - мінімальна кількість промо-товарів
+
+**Відповідь:**
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "store_name": "Сільпо Центр",
+      "city": "Київ",
+      "promo_products": 85,
+      "avg_discount_percent": 18.5,
+      "total_savings": 4250.00
+    }
+  ],
+  "statistics": {
+    "total_promo_products": 520,
+    "avg_discount_percent": 16.8,
+    "total_savings": 28500.00
+  }
+}
+```
+
+---
+
+### 6. Динаміка створення продуктів
+**GET** `/api/analytics/product-creation-dynamics/`
+
+**Query Parameters:**
+- `product_type` (optional) - фільтр по типу продукту
+
+**Відповідь:**
+```json
+{
+  "data": [
+    {
+      "month": "2024-11-01",
+      "product_type_name": "Пиво",
+      "products_added": 45
+    }
+  ],
+  "statistics": {
+    "total_months": 12,
+    "total_products_added": 850,
+    "avg_products_per_month": 70.83,
+    "peak_month": "2024-11-01"
+  }
+}
+```
+
+---
+
 ## Тестування
+
+### Запуск тестів
+```bash
+# Всі тести
+python manage.py test
+
+# Тільки аналітичні тести
+python manage.py test monitoring.tests.test_analytics_repository
+python manage.py test monitoring.tests.test_analytics_api
+```
 
 ### Django check
 ```bash
