@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.core.paginator import Paginator
+from django.contrib.auth.decorators import login_required
 from monitoring.repositories.analytics import AnalyticsRepository
 from monitoring.charts.plotly_charts import PlotlyChartsGenerator
 from monitoring.models import Store, ProductType, Product
@@ -10,6 +11,7 @@ from datetime import datetime
 analytics_repo = AnalyticsRepository()
 
 
+@login_required
 def dashboard_v1_view(request):
     # Пагінація продуктів
     page_number = request.GET.get('page', 1)

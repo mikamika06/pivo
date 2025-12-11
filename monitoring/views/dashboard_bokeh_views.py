@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 from monitoring.repositories.analytics import AnalyticsRepository
 from monitoring.charts.bokeh_charts import BokehChartsGenerator
 from bokeh.resources import CDN
@@ -7,6 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+@login_required
 def dashboard_v2_view(request):
     try:
         analytics_repo = AnalyticsRepository()

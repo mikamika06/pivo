@@ -1,9 +1,11 @@
 from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 from monitoring.performance.optimization_experiments import DatabaseOptimizationExperiments
 from monitoring.charts.performance_charts import PerformanceChartsGenerator
 import pandas as pd
 
 
+@login_required
 def performance_dashboard_view(request):
     experiments = DatabaseOptimizationExperiments()
     charts_generator = PerformanceChartsGenerator()
