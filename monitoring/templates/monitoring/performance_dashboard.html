@@ -12,6 +12,8 @@
     {{ exec_time_script|safe }}
     {{ throughput_script|safe }}
     {{ heatmap_script|safe }}
+    {{ cpu_script|safe }}
+    {{ memory_script|safe }}
     <style>
         body {
             background-color: #f8f9fa;
@@ -101,7 +103,26 @@
             <div class="col-12">
                 <div class="chart-container">
                     <h3>Теплова карта часу виконання</h3>
+                    <p class="text-muted"><small>🟢 Зелений = швидко (менше секунд) | 🔴 Червоний = повільно (більше секунд)</small></p>
                     {{ heatmap_div|safe }}
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-container">
+                    <h3>Використання CPU</h3>
+                    {{ cpu_div|safe }}
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="chart-container">
+                    <h3>Використання пам'яті (RAM)</h3>
+                    {{ memory_div|safe }}
                 </div>
             </div>
         </div>
