@@ -12,6 +12,7 @@ from monitoring.api.analytics_views import (
     promo_analysis_by_store_view,
     product_creation_dynamics_view
 )
+from monitoring.views.dashboard_views import dashboard_v1_view
 
 router = DefaultRouter()
 router.register("product-types", ProductTypeViewSet, basename="product-type")
@@ -30,6 +31,7 @@ urlpatterns = [
     path("api/analytics/products-by-price-ranges/", products_by_price_ranges_view, name="analytics-price-ranges"),
     path("api/analytics/promo-analysis/", promo_analysis_by_store_view, name="analytics-promo"),
     path("api/analytics/product-creation-dynamics/", product_creation_dynamics_view, name="analytics-dynamics"),
+    path("dashboard/v1/", dashboard_v1_view, name="dashboard_v1"),
 ]
 
 handler404 = 'web_interface.views.custom_404_view'
