@@ -1,17 +1,21 @@
 import plotly.graph_objects as go
 import plotly.express as px
-import pandas as pd
 
 
 class PlotlyChartsGenerator:
     
-    def create_avg_prices_chart(self, df):
-        if df.empty:
+    def create_avg_prices_chart(self, data):
+        # data - вже list of dict з API
+        if not data:
             return self._create_empty_chart("Середні ціни за типами продукту")
         
+        product_types = [item['product_type_name'] for item in data]
+        avg_regular = [item['avg_regular_price'] for item in data]
+        avg_promo = [item.get('avg_promo_price', 0) or 0 for item in data]
+        
         fig = go.Figure(data=[
-            go.Bar(name='Регулярна ціна', x=df['product_type_name'], y=df['avg_regular_price']),
-            go.Bar(name='Промо ціна', x=df['product_type_name'], y=df['avg_promo_price'])
+            go.Bar(name='Регулярна ціна', x=product_types, y=avg_regular),
+            go.Bar(name='Промо ціна', x=product_types, y=avg_promo)
         ])
         
         fig.update_layout(
@@ -24,22 +28,27 @@ class PlotlyChartsGenerator:
         
         return fig.to_html(full_html=False, include_plotlyjs='cdn')
     
-    def create_store_statistics_chart(self, df):
-        if df.empty:
+    def create_store_statistics_chart(self, data):
+        # data - вже list of dict з API
+        if not data:
             return self._create_empty_chart("Статистика магазинів за містами")
+        
+        cities = [item['city'] for item in data]
+        total_products = [item['total_products'] for item in data]
+        promo_products = [item['promo_products_count'] for item in data]
         
         fig = go.Figure()
         
         fig.add_trace(go.Scatter(
-            x=df['city'],
-            y=df['total_products'],
+            x=cities,
+            y=total_products,
             mode='lines+markers',
             name='Всього товарів'
         ))
         
         fig.add_trace(go.Scatter(
-            x=df['city'],
-            y=df['promo_products_count'],
+            x=cities,
+            y=promo_products,
             mode='lines+markers',
             name='Промо товарів'
         ))
@@ -53,34 +62,38 @@ class PlotlyChartsGenerator:
         
         return fig.to_html(full_html=False, include_plotlyjs='cdn')
     
-    def create_top_expensive_products_chart(self, df):
-        if df.empty:
+    def create_top_expensive_products_chart(self, data):
+        # data - вже list of dict з API
+        if not data:
             return self._create_empty_chart("Топ-10 найдорожчих продуктів")
         
-        if 'regular_price' in df.columns:
-            df['regular_price'] = pd.to_numeric(df['regular_price'], errors='coerce')
-        if 'promo_price' in df.columns:
-            df['promo_price'] = pd.to_numeric(df['promo_price'], errors='coerce')
+        # Сортуємо та беремо топ-10
+        sorted_data = sorted(data, key=lambda x: float(x.get('regular_price', 0) or 0), reverse=True)[:10]
         
-        df_sorted = df.nlargest(10, 'regular_price')
-        df_sorted['short_name'] = df_sorted['product_name'].str[:35] + '...'
+        for item in sorted_data:
+            item['short_name'] = item['product_name'][:35] + '...'
         
         type_colors = {
             'Beer': '#FFA500', 'Wine': '#8B0000', 'Whiskey': '#D4AF37',
             'Vodka': '#87CEEB', 'Cognac': '#654321', 'Champagne': '#FFD700',
             'Liqueur': '#FF69B4', 'Rum': '#8B4513'
         }
-        df_sorted['color'] = df_sorted['product_type_name'].map(lambda x: type_colors.get(x, '#808080'))
+        colors = [type_colors.get(item['product_type_name'], '#808080') for item in sorted_data]
+        
+        short_names = [item['short_name'] for item in sorted_data]
+        prices = [float(item['regular_price']) for item in sorted_data]
+        product_names = [item['product_name'] for item in sorted_data]
+        product_types = [item['product_type_name'] for item in sorted_data]
         
         fig = go.Figure(go.Bar(
-            x=df_sorted['regular_price'],
-            y=df_sorted['short_name'],
+            x=prices,
+            y=short_names,
             orientation='h',
-            marker=dict(color=df_sorted['color']),
-            text=df_sorted['regular_price'].round(2),
+            marker=dict(color=colors),
+            text=[f"{p:.2f}" for p in prices],
             textposition='outside',
             hovertemplate='<b>%{customdata[0]}</b><br>Ціна: %{x:.2f} грн<br>Тип: %{customdata[1]}<extra></extra>',
-            customdata=df_sorted[['product_name', 'product_type_name']]
+            customdata=list(zip(product_names, product_types))
         ))
         
         fig.update_layout(
@@ -93,8 +106,9 @@ class PlotlyChartsGenerator:
         
         return fig.to_html(full_html=False, include_plotlyjs='cdn')
     
-    def create_price_ranges_chart(self, df):
-        if df.empty:
+    def create_price_ranges_chart(self, data):
+        # data - вже list of dict з API
+        if not data:
             return self._create_empty_chart("Розподіл товарів за ціновими діапазонами")
         
         type_colors = {
@@ -103,13 +117,17 @@ class PlotlyChartsGenerator:
             'Whiskey': '#D4AF37', 'Wine': '#8B0000'
         }
         
+        # Перетворюємо в формат для plotly
+        price_ranges = [item['price_range'] for item in data]
+        counts = [item['count'] for item in data]
+        types = [item['product_type_name'] for item in data]
+        
         fig = px.bar(
-            df,
-            x='price_range',
-            y='count',
-            color='product_type_name',
+            x=price_ranges,
+            y=counts,
+            color=types,
             title='Розподіл товарів за ціновими діапазонами',
-            labels={'price_range': 'Ціновий діапазон', 'count': 'Кількість', 'product_type_name': 'Тип'},
+            labels={'x': 'Ціновий діапазон', 'y': 'Кількість', 'color': 'Тип'},
             color_discrete_map=type_colors
         )
         
@@ -117,26 +135,30 @@ class PlotlyChartsGenerator:
         
         return fig.to_html(full_html=False, include_plotlyjs='cdn')
     
-    def create_promo_analysis_chart(self, df):
-        if df.empty:
+    def create_promo_analysis_chart(self, data):
+        # data - вже list of dict з API
+        if not data:
             return self._create_empty_chart("Аналіз промо-акцій")
         
-        if 'total_savings' in df.columns:
-            df['total_savings'] = pd.to_numeric(df['total_savings'], errors='coerce')
-        if 'avg_discount_percent' in df.columns:
-            df['avg_discount_percent'] = pd.to_numeric(df['avg_discount_percent'], errors='coerce')
+        # Сортуємо та беремо топ-15
+        sorted_data = sorted(data, key=lambda x: float(x.get('total_savings', 0) or 0), reverse=True)[:15]
+        sorted_data = sorted(sorted_data, key=lambda x: float(x.get('total_savings', 0) or 0))
         
-        df_top = df.nlargest(15, 'total_savings').sort_values('total_savings')
+        store_names = [item['store_name'] for item in sorted_data]
+        total_savings = [float(item['total_savings']) for item in sorted_data]
+        cities = [item['city'] for item in sorted_data]
+        promo_products = [item['promo_products'] for item in sorted_data]
+        avg_discounts = [float(item['avg_discount_percent']) for item in sorted_data]
         
         fig = go.Figure(go.Bar(
-            x=df_top['total_savings'],
-            y=df_top['store_name'],
+            x=total_savings,
+            y=store_names,
             orientation='h',
             marker=dict(color='#2ca02c'),
-            text=df_top['total_savings'].round(0),
+            text=[f"{s:.0f}" for s in total_savings],
             textposition='outside',
             hovertemplate='<b>%{y}</b><br>Економія: %{x:,.0f} грн<br>Місто: %{customdata[0]}<br>Промо товарів: %{customdata[1]}<br>Знижка: %{customdata[2]:.1f}%<extra></extra>',
-            customdata=df_top[['city', 'promo_products', 'avg_discount_percent']]
+            customdata=list(zip(cities, promo_products, avg_discounts))
         ))
         
         fig.update_layout(
@@ -149,7 +171,7 @@ class PlotlyChartsGenerator:
         
         return fig.to_html(full_html=False, include_plotlyjs='cdn')
     
-    def create_product_dynamics_chart(self, df):
+    def create_product_dynamics_chart(self, data):
         from monitoring.models import Product, ProductType
         from django.db.models import Count, Q
         
@@ -161,30 +183,35 @@ class PlotlyChartsGenerator:
             regular_products=Count('products', filter=Q(products__promo_price__isnull=True))
         ).values('name', 'total_products', 'promo_products', 'regular_products').order_by('-total_products')
         
-        df_promo = pd.DataFrame(list(promo_data))
+        promo_list = list(promo_data)
         
-        if df_promo.empty:
+        if not promo_list:
             return self._create_empty_chart("Промо vs Регулярні")
         
-        df_promo['promo_percent'] = (df_promo['promo_products'] / df_promo['total_products'] * 100).round(1)
+        for item in promo_list:
+            item['promo_percent'] = round((item['promo_products'] / item['total_products'] * 100), 1) if item['total_products'] > 0 else 0
+        
+        names = [item['name'] for item in promo_list]
+        promo_prods = [item['promo_products'] for item in promo_list]
+        regular_prods = [item['regular_products'] for item in promo_list]
         
         fig = go.Figure()
         
         fig.add_trace(go.Bar(
             name='Промо товари',
-            x=df_promo['name'],
-            y=df_promo['promo_products'],
+            x=names,
+            y=promo_prods,
             marker_color='#2ca02c',
-            text=df_promo['promo_products'],
+            text=promo_prods,
             textposition='outside'
         ))
         
         fig.add_trace(go.Bar(
             name='Регулярні товари',
-            x=df_promo['name'],
-            y=df_promo['regular_products'],
+            x=names,
+            y=regular_prods,
             marker_color='#1f77b4',
-            text=df_promo['regular_products'],
+            text=regular_prods,
             textposition='outside'
         ))
         

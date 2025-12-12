@@ -4,11 +4,25 @@ from django.contrib.auth.decorators import login_required
 from monitoring.repositories.analytics import AnalyticsRepository
 from monitoring.charts.plotly_charts import PlotlyChartsGenerator
 from monitoring.models import Store, ProductType, Product
-import pandas as pd
 from datetime import datetime
+from decimal import Decimal
 
 
 analytics_repo = AnalyticsRepository()
+
+
+def _convert_decimals_in_list(data):
+    """Конвертує Decimal в float у списку словників"""
+    result = []
+    for item in data:
+        converted_item = {}
+        for key, value in item.items():
+            if isinstance(value, Decimal):
+                converted_item[key] = float(value)
+            else:
+                converted_item[key] = value
+        result.append(converted_item)
+    return result
 
 
 @login_required
@@ -19,28 +33,22 @@ def dashboard_v1_view(request):
     paginator = Paginator(products_list, 20)  # 20 продуктів на сторінку
     page_obj = paginator.get_page(page_number)
     
-    data1 = analytics_repo.get_avg_prices_by_product_type()
-    data2 = analytics_repo.get_store_statistics_by_city()
-    data3 = analytics_repo.get_top_expensive_products(limit=10)
-    data4 = analytics_repo.get_products_by_price_ranges()
-    data5 = analytics_repo.get_promo_analysis_by_store()
-    data6 = analytics_repo.get_product_creation_dynamics()
-    
-    df1 = pd.DataFrame(list(data1))
-    df2 = pd.DataFrame(list(data2))
-    df3 = pd.DataFrame(list(data3))
-    df4 = pd.DataFrame(list(data4))
-    df5 = pd.DataFrame(list(data5))
-    df6 = pd.DataFrame(list(data6))
+    # Отримуємо дані з репозиторію та конвертуємо в list
+    data1 = _convert_decimals_in_list(list(analytics_repo.get_avg_prices_by_product_type()))
+    data2 = _convert_decimals_in_list(list(analytics_repo.get_store_statistics_by_city()))
+    data3 = _convert_decimals_in_list(list(analytics_repo.get_top_expensive_products(limit=10)))
+    data4 = _convert_decimals_in_list(list(analytics_repo.get_products_by_price_ranges()))
+    data5 = _convert_decimals_in_list(list(analytics_repo.get_promo_analysis_by_store()))
+    data6 = _convert_decimals_in_list(list(analytics_repo.get_product_creation_dynamics()))
     
     chart_generator = PlotlyChartsGenerator()
     
-    chart1 = chart_generator.create_avg_prices_chart(df1)
-    chart2 = chart_generator.create_store_statistics_chart(df2)
-    chart3 = chart_generator.create_top_expensive_products_chart(df3)
-    chart4 = chart_generator.create_price_ranges_chart(df4)
-    chart5 = chart_generator.create_promo_analysis_chart(df5)
-    chart6 = chart_generator.create_product_dynamics_chart(df6)
+    chart1 = chart_generator.create_avg_prices_chart(data1)
+    chart2 = chart_generator.create_store_statistics_chart(data2)
+    chart3 = chart_generator.create_top_expensive_products_chart(data3)
+    chart4 = chart_generator.create_price_ranges_chart(data4)
+    chart5 = chart_generator.create_promo_analysis_chart(data5)
+    chart6 = chart_generator.create_product_dynamics_chart(data6)
     
     stats = {
         'total_stores': Store.objects.filter(is_active=True).count(),

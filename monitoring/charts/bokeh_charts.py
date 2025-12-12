@@ -4,33 +4,30 @@ from bokeh.transform import dodge
 from bokeh.palettes import Category20_3, Category10
 from bokeh.embed import components
 from bokeh.resources import CDN
-import pandas as pd
 from collections import defaultdict
-from decimal import Decimal
 
 
 class BokehChartsGenerator:
     
-    def _convert_decimals(self, df):
-        for col in df.columns:
-            if df[col].dtype == 'object':
-                try:
-                    if any(isinstance(x, Decimal) for x in df[col].dropna()[:5]):
-                        df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(float)
-                except:
-                    pass
-        return df
+    def _list_of_dicts_to_dict_of_lists(self, data):
+        """Конвертує list of dicts у dict of lists для ColumnDataSource"""
+        if not data:
+            return {}
+        result = defaultdict(list)
+        for item in data:
+            for key, value in item.items():
+                result[key].append(value)
+        return dict(result)
     
     def create_avg_prices_chart_bokeh(self, data):
-        df = pd.DataFrame(list(data))
-        
-        if df.empty:
+        # data - вже list of dict з API
+        if not data:
             return self._create_empty_chart("Середні ціни за типами продукту")
         
-        df = self._convert_decimals(df)
-        
-        source = ColumnDataSource(df)
-        product_types = df['product_type_name'].tolist()
+        # Конвертуємо list of dicts у dict of lists для Bokeh
+        data_dict = self._list_of_dicts_to_dict_of_lists(data)
+        source = ColumnDataSource(data_dict)
+        product_types = [item['product_type_name'] for item in data]
         
         p = figure(
             x_range=product_types,
@@ -75,14 +72,11 @@ class BokehChartsGenerator:
         return script, div
     
     def create_store_statistics_chart(self, data):
-        df = pd.DataFrame(list(data))
-        
-        if df.empty:
+        # data - вже list of dict з API
+        if not data:
             return self._create_empty_chart("Статистика магазинів за містами")
         
-        df = self._convert_decimals(df)
-        
-        cities = df['city'].tolist()
+        cities = [item['city'] for item in data]
         
         p = figure(
             x_range=cities,
@@ -92,7 +86,8 @@ class BokehChartsGenerator:
             tools="pan,wheel_zoom,box_zoom,reset,save"
         )
         
-        source = ColumnDataSource(df)
+        data_dict = self._list_of_dicts_to_dict_of_lists(data)
+        source = ColumnDataSource(data_dict)
         
         p.line(x='city', y='total_products', source=source, 
                line_width=2, color='#1f77b4', legend_label='Всього товарів')
@@ -123,15 +118,15 @@ class BokehChartsGenerator:
         return script, div
     
     def create_top_expensive_products_chart(self, data):
-        df = pd.DataFrame(list(data))
-        
-        if df.empty:
+        # data - вже list of dict з API
+        if not data:
             return self._create_empty_chart("Топ-10 найдорожчих продуктів")
         
-        df = self._convert_decimals(df)
-        df = df.nlargest(10, 'regular_price')
+        # Сортуємо та беремо топ-10
+        sorted_data = sorted(data, key=lambda x: x['regular_price'], reverse=True)[:10]
         
-        df['short_name'] = df['product_name'].str[:30] + '...'
+        for item in sorted_data:
+            item['short_name'] = item['product_name'][:30] + '...'
         
         type_colors = {
             'Beer': '#FFA500',
@@ -143,10 +138,12 @@ class BokehChartsGenerator:
             'Liqueur': '#FF69B4',
             'Rum': '#8B4513'
         }
-        df['color'] = df['product_type_name'].map(lambda x: type_colors.get(x, '#808080'))
+        for item in sorted_data:
+            item['color'] = type_colors.get(item['product_type_name'], '#808080')
         
-        source = ColumnDataSource(df)
-        product_names = df['short_name'].tolist()
+        data_dict = self._list_of_dicts_to_dict_of_lists(sorted_data)
+        source = ColumnDataSource(data_dict)
+        product_names = [item['short_name'] for item in sorted_data]
         
         p = figure(
             y_range=product_names,
@@ -177,20 +174,18 @@ class BokehChartsGenerator:
         return script, div
     
     def create_price_ranges_chart(self, data):
-        df = pd.DataFrame(list(data))
-        
-        if df.empty:
+        # data - вже list of dict з API
+        if not data:
             return self._create_empty_chart("Розподіл товарів за ціновими діапазонами")
-        
-        df = self._convert_decimals(df)
         
         price_ranges = ['0-30 грн', '30-60 грн', '60-100 грн', '100+ грн']
         
-        product_types = sorted(df['product_type_name'].unique())
+        # Збираємо унікальні типи продуктів
+        product_types = sorted(set(item['product_type_name'] for item in data))
         
         range_data = defaultdict(lambda: defaultdict(int))
-        for _, row in df.iterrows():
-            range_data[row['price_range']][row['product_type_name']] = int(row['count'])
+        for item in data:
+            range_data[item['price_range']][item['product_type_name']] = int(item['count'])
         
         data_dict = {'price_range': price_ranges}
         for pt in product_types:
@@ -236,17 +231,17 @@ class BokehChartsGenerator:
         return script, div
     
     def create_promo_analysis_chart(self, data):
-        df = pd.DataFrame(list(data))
-        
-        if df.empty:
+        # data - вже list of dict з API
+        if not data:
             return self._create_empty_chart("Аналіз промо-акцій")
         
-        df = self._convert_decimals(df)
-        df = df.nlargest(15, 'total_savings')
-        df = df.sort_values('avg_discount_percent')
+        # Сортуємо та беремо топ-15
+        sorted_data = sorted(data, key=lambda x: x['total_savings'], reverse=True)[:15]
+        sorted_data = sorted(sorted_data, key=lambda x: x['avg_discount_percent'])
         
-        source = ColumnDataSource(df)
-        stores = df['store_name'].tolist()
+        data_dict = self._list_of_dicts_to_dict_of_lists(sorted_data)
+        source = ColumnDataSource(data_dict)
+        stores = [item['store_name'] for item in sorted_data]
         
         p = figure(
             y_range=stores,
@@ -289,15 +284,15 @@ class BokehChartsGenerator:
             regular_products=Count('products', filter=Q(products__promo_price__isnull=True))
         ).values('name', 'total_products', 'promo_products', 'regular_products').order_by('-total_products')
         
-        df = pd.DataFrame(list(promo_data))
+        promo_list = list(promo_data)
         
-        if df.empty:
+        if not promo_list:
             return self._create_empty_chart("Промо vs Регулярні товари")
         
-        df = self._convert_decimals(df)
-        df['promo_percent'] = (df['promo_products'] / df['total_products'] * 100).round(1)
+        for item in promo_list:
+            item['promo_percent'] = round((item['promo_products'] / item['total_products'] * 100), 1) if item['total_products'] > 0 else 0
         
-        product_types = df['name'].tolist()
+        product_types = [item['name'] for item in promo_list]
         
         p = figure(
             x_range=product_types,
@@ -308,7 +303,8 @@ class BokehChartsGenerator:
             tools="pan,wheel_zoom,box_zoom,reset,save"
         )
         
-        source = ColumnDataSource(df)
+        data_dict = self._list_of_dicts_to_dict_of_lists(promo_list)
+        source = ColumnDataSource(data_dict)
         
         p.vbar(x='name', top='promo_products', source=source,
                width=0.35, color='#2ca02c', legend_label='Промо товари', alpha=0.8)
