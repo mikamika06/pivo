@@ -3,8 +3,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status
-import pandas as pd
-import numpy as np
+from decimal import Decimal
 
 from monitoring.repositories.analytics import AnalyticsRepository
 
@@ -16,31 +15,31 @@ analytics_repo = AnalyticsRepository()
 @permission_classes([AllowAny])  
 def avg_prices_by_product_type_view(request):
     try:
-        data = analytics_repo.get_avg_prices_by_product_type()
+        data = list(analytics_repo.get_avg_prices_by_product_type())
         
-        df = pd.DataFrame(list(data))
+        # Конвертуємо Decimal в float
+        for item in data:
+            for key, value in item.items():
+                if isinstance(value, Decimal):
+                    item[key] = float(value)
         
-        if df.empty:
+        if not data:
             return Response({
                 'data': [],
-                'shape': [0, 0],
-                'columns': [],
                 'statistics': {}
             })
         
         statistics = {
-            'total_product_types': len(df),
-            'avg_regular_price_overall': float(df['avg_regular_price'].mean()),
-            'avg_promo_price_overall': float(df['avg_promo_price'].mean()),
-            'total_products': int(df['product_count'].sum()),
-            'max_avg_regular_price': float(df['avg_regular_price'].max()),
-            'min_avg_regular_price': float(df['avg_regular_price'].min())
+            'total_product_types': len(data),
+            'avg_regular_price_overall': sum(item['avg_regular_price'] for item in data) / len(data),
+            'avg_promo_price_overall': sum(item.get('avg_promo_price', 0) or 0 for item in data) / len(data),
+            'total_products': sum(item['product_count'] for item in data),
+            'max_avg_regular_price': max(item['avg_regular_price'] for item in data),
+            'min_avg_regular_price': min(item['avg_regular_price'] for item in data)
         }
         
         response_data = {
-            'data': df.to_dict(orient='records'),
-            'shape': list(df.shape),
-            'columns': list(df.columns),
+            'data': data,
             'statistics': statistics
         }
         
@@ -57,35 +56,40 @@ def avg_prices_by_product_type_view(request):
 @permission_classes([AllowAny])
 def store_statistics_by_city_view(request):
     try:
-        data = analytics_repo.get_store_statistics_by_city()
+        queryset = analytics_repo.get_store_statistics_by_city()
         
         city_filter = request.GET.get('city', None)
         if city_filter:
-            data = data.filter(city__icontains=city_filter)
+            queryset = queryset.filter(city__icontains=city_filter)
         
-        df = pd.DataFrame(list(data))
+        data = list(queryset)
         
-        if df.empty:
+        # Конвертуємо Decimal в float
+        for item in data:
+            for key, value in item.items():
+                if isinstance(value, Decimal):
+                    item[key] = float(value)
+        
+        if not data:
             return Response({
                 'data': [],
-                'shape': [0, 0],
-                'columns': [],
                 'statistics': {}
             })
         
+        total_stores = sum(item['store_count'] for item in data)
+        total_products = sum(item['total_products'] for item in data)
+        
         statistics = {
-            'total_cities': len(df),
-            'total_stores': int(df['store_count'].sum()),
-            'total_products': int(df['total_products'].sum()),
-            'avg_products_per_store': float(df['total_products'].sum() / df['store_count'].sum()),
-            'avg_price_overall': float(df['avg_price'].mean()),
-            'total_promo_products': int(df['promo_products_count'].sum())
+            'total_cities': len(data),
+            'total_stores': total_stores,
+            'total_products': total_products,
+            'avg_products_per_store': total_products / total_stores if total_stores > 0 else 0,
+            'avg_price_overall': sum(item.get('avg_price', 0) or 0 for item in data) / len(data),
+            'total_promo_products': sum(item['promo_products_count'] for item in data)
         }
         
         response_data = {
-            'data': df.to_dict(orient='records'),
-            'shape': list(df.shape),
-            'columns': list(df.columns),
+            'data': data,
             'statistics': statistics
         }
         
@@ -104,29 +108,32 @@ def top_expensive_products_view(request):
     try:
         limit = int(request.GET.get('limit', 10))
         
-        data = analytics_repo.get_top_expensive_products(limit=limit)
-        df = pd.DataFrame(list(data))
+        data = list(analytics_repo.get_top_expensive_products(limit=limit))
         
-        if df.empty:
+        # Конвертуємо Decimal в float
+        for item in data:
+            for key, value in item.items():
+                if isinstance(value, Decimal):
+                    item[key] = float(value)
+        
+        if not data:
             return Response({
                 'data': [],
-                'shape': [0, 0],
-                'columns': [],
                 'statistics': {}
             })
         
+        products_with_promo = sum(1 for item in data if item.get('promo_price') is not None)
+        
         statistics = {
-            'avg_regular_price': float(df['regular_price'].mean()),
-            'avg_discount': float(df['discount'].mean()),
-            'products_with_promo': int(df['promo_price'].notna().sum()),
-            'max_discount': float(df['discount'].max()),
-            'total_potential_savings': float(df['discount'].sum())
+            'avg_regular_price': sum(item['regular_price'] for item in data) / len(data),
+            'avg_discount': sum(item['discount'] for item in data) / len(data),
+            'products_with_promo': products_with_promo,
+            'max_discount': max(item['discount'] for item in data),
+            'total_potential_savings': sum(item['discount'] for item in data)
         }
         
         response_data = {
-            'data': df.to_dict(orient='records'),
-            'shape': list(df.shape),
-            'columns': list(df.columns),
+            'data': data,
             'statistics': statistics
         }
         
@@ -143,37 +150,49 @@ def top_expensive_products_view(request):
 @permission_classes([AllowAny])
 def products_by_price_ranges_view(request):
     try:
-        data = analytics_repo.get_products_by_price_ranges()
+        queryset = analytics_repo.get_products_by_price_ranges()
         
         product_type_filter = request.GET.get('product_type', None)
         if product_type_filter:
-            data = data.filter(product_type_name__icontains=product_type_filter)
+            queryset = queryset.filter(product_type_name__icontains=product_type_filter)
         
-        df = pd.DataFrame(list(data))
+        data = list(queryset)
         
-        if df.empty:
+        # Конвертуємо Decimal в float
+        for item in data:
+            for key, value in item.items():
+                if isinstance(value, Decimal):
+                    item[key] = float(value)
+        
+        if not data:
             return Response({
                 'data': [],
-                'shape': [0, 0],
-                'columns': [],
                 'statistics': {}
             })
         
-        range_totals = df.groupby('price_range')['count'].sum()
-        most_popular_range = range_totals.idxmax()
+        # Підрахунки без pandas
+        range_totals = {}
+        unique_ranges = set()
+        unique_types = set()
+        
+        for item in data:
+            range_name = item['price_range']
+            unique_ranges.add(range_name)
+            unique_types.add(item['product_type_name'])
+            range_totals[range_name] = range_totals.get(range_name, 0) + item['count']
+        
+        most_popular_range = max(range_totals, key=range_totals.get) if range_totals else None
         
         statistics = {
-            'total_products': int(df['count'].sum()),
-            'price_ranges_count': len(df['price_range'].unique()),
+            'total_products': sum(item['count'] for item in data),
+            'price_ranges_count': len(unique_ranges),
             'most_popular_range': most_popular_range,
-            'most_popular_range_count': int(range_totals.max()),
-            'product_types_count': len(df['product_type_name'].unique())
+            'most_popular_range_count': range_totals.get(most_popular_range, 0) if most_popular_range else 0,
+            'product_types_count': len(unique_types)
         }
         
         response_data = {
-            'data': df.to_dict(orient='records'),
-            'shape': list(df.shape),
-            'columns': list(df.columns),
+            'data': data,
             'statistics': statistics
         }
         
@@ -190,39 +209,43 @@ def products_by_price_ranges_view(request):
 @permission_classes([AllowAny])
 def promo_analysis_by_store_view(request):
     try:
-        data = analytics_repo.get_promo_analysis_by_store()
+        queryset = analytics_repo.get_promo_analysis_by_store()
         
         city_filter = request.GET.get('city', None)
         min_promo = request.GET.get('min_promo_products', None)
         
         if city_filter:
-            data = data.filter(city__icontains=city_filter)
+            queryset = queryset.filter(city__icontains=city_filter)
         if min_promo:
-            data = data.filter(promo_products__gte=int(min_promo))
+            queryset = queryset.filter(promo_products__gte=int(min_promo))
         
-        df = pd.DataFrame(list(data))
+        data = list(queryset)
         
-        if df.empty:
+        # Конвертуємо Decimal в float
+        for item in data:
+            for key, value in item.items():
+                if isinstance(value, Decimal):
+                    item[key] = float(value)
+        
+        if not data:
             return Response({
                 'data': [],
-                'shape': [0, 0],
-                'columns': [],
                 'statistics': {}
             })
         
+        max_promo_store = max(data, key=lambda x: x['promo_products'])
+        
         statistics = {
-            'total_stores': len(df),
-            'total_promo_products': int(df['promo_products'].sum()),
-            'avg_discount_percent': float(df['avg_discount_percent'].mean()),
-            'total_savings': float(df['total_savings'].sum()),
-            'max_discount_percent': float(df['avg_discount_percent'].max()),
-            'store_with_most_promos': df.loc[df['promo_products'].idxmax(), 'store_name']
+            'total_stores': len(data),
+            'total_promo_products': sum(item['promo_products'] for item in data),
+            'avg_discount_percent': sum(item['avg_discount_percent'] for item in data) / len(data),
+            'total_savings': sum(item['total_savings'] for item in data),
+            'max_discount_percent': max(item['avg_discount_percent'] for item in data),
+            'store_with_most_promos': max_promo_store['store_name']
         }
         
         response_data = {
-            'data': df.to_dict(orient='records'),
-            'shape': list(df.shape),
-            'columns': list(df.columns),
+            'data': data,
             'statistics': statistics
         }
         
@@ -239,40 +262,52 @@ def promo_analysis_by_store_view(request):
 @permission_classes([AllowAny])
 def product_creation_dynamics_view(request):
     try:
-        data = analytics_repo.get_product_creation_dynamics()
+        queryset = analytics_repo.get_product_creation_dynamics()
         
         product_type_filter = request.GET.get('product_type', None)
         if product_type_filter:
-            data = data.filter(product_type_name__icontains=product_type_filter)
+            queryset = queryset.filter(product_type_name__icontains=product_type_filter)
         
-        df = pd.DataFrame(list(data))
+        data = list(queryset)
         
-        if df.empty:
+        # Конвертуємо Decimal в float та дати в str
+        for item in data:
+            for key, value in item.items():
+                if isinstance(value, Decimal):
+                    item[key] = float(value)
+                elif key == 'month':
+                    item[key] = str(value)
+        
+        if not data:
             return Response({
                 'data': [],
-                'shape': [0, 0],
-                'columns': [],
                 'statistics': {}
             })
         
-        df['month'] = df['month'].astype(str)
+        # Підрахунки без pandas
+        monthly_totals = {}
+        unique_months = set()
+        unique_types = set()
         
-        monthly_totals = df.groupby('month')['products_added'].sum()
-        peak_month = monthly_totals.idxmax()
+        for item in data:
+            month = item['month']
+            unique_months.add(month)
+            unique_types.add(item['product_type_name'])
+            monthly_totals[month] = monthly_totals.get(month, 0) + item['products_added']
+        
+        peak_month = max(monthly_totals, key=monthly_totals.get) if monthly_totals else None
         
         statistics = {
-            'total_months': len(df['month'].unique()),
-            'total_products_added': int(df['products_added'].sum()),
-            'avg_products_per_month': float(df.groupby('month')['products_added'].sum().mean()),
+            'total_months': len(unique_months),
+            'total_products_added': sum(item['products_added'] for item in data),
+            'avg_products_per_month': sum(monthly_totals.values()) / len(monthly_totals) if monthly_totals else 0,
             'peak_month': peak_month,
-            'peak_month_count': int(monthly_totals.max()),
-            'product_types_tracked': len(df['product_type_name'].unique())
+            'peak_month_count': monthly_totals.get(peak_month, 0) if peak_month else 0,
+            'product_types_tracked': len(unique_types)
         }
         
         response_data = {
-            'data': df.to_dict(orient='records'),
-            'shape': list(df.shape),
-            'columns': list(df.columns),
+            'data': data,
             'statistics': statistics
         }
         

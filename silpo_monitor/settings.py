@@ -50,7 +50,7 @@ WSGI_APPLICATION = "silpo_monitor.wsgi.application"
 ASGI_APPLICATION = "silpo_monitor.asgi.application"
 
 
-DB_BACKEND = os.getenv("DJANGO_DB_BACKEND", "mysql").lower()
+DB_BACKEND = os.getenv("DJANGO_DB_BACKEND", "sqlite").lower()
 
 if DB_BACKEND == "mysql":
     DATABASES = {
